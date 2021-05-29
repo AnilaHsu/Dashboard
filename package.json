@@ -1,0 +1,25 @@
+{
+  "name": "iot_web",
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview"
+  },
+  "dependencies": {
+    "@j-t-mcc/vue3-chartjs": "^1.1.1",
+    "chart.js": "^3.2.1",
+    "chartjs-plugin-zoom": "^1.0.0-rc",
+    "element-plus": "*",
+    "vue": "^3.0.5",
+    "vue-router": "^4.0.8",
+    "vuex": "^4.0.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^1.2.2",
+    "@vue/compiler-sfc": "^3.0.5",
+    "sass": "^1.32.13",
+    "sass-loader": "^11.1.1",
+    "vite": "^2.3.0"
+  }
+}
