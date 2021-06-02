@@ -2,63 +2,60 @@
   <el-row>
     <el-col :span="18">
       <div class="chart">
-        <div class="period" style="margin-top: 20px">
-          <el-radio-group
-            v-model="periodOption"
-            style="margin-bottom: 30px"
-            @change="changePeriod"
-          >
-            <el-radio-button label="0">今日</el-radio-button>
-            <el-radio-button label="1">過去一週</el-radio-button>
-            <el-radio-button label="2">過去一個月</el-radio-button>
-            <el-radio-button label="3">過去三個月</el-radio-button>
-          </el-radio-group>
+        <div class="options">
+          <span>
+            <el-select
+              class="probe"
+              v-model="value"
+              clearable
+              placeholder="請選擇 probe"
+              @change="updateData"
+            >
+              <el-option
+                v-for="item in options"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              >
+              </el-option>
+            </el-select>
+          </span>
+          <span class="tab" style="margin-top: 20px">
+            <el-radio-group
+              class="tabs"
+              v-model="tabOption"
+              style="margin-bottom: 30px"
+              @change="updateData"
+            >
+              <el-radio-button label="V">電壓</el-radio-button>
+              <el-radio-button label="C">電流</el-radio-button>
+              <el-radio-button label="P">功耗</el-radio-button>
+            </el-radio-group>
+          </span>
         </div>
-        <div>
+
+        <el-card class="line_chart">
           <vue3-chart-js ref="lineChartRef" v-bind="{ ...lineChart }" />
-        </div>
+        </el-card>
       </div>
     </el-col>
 
     <el-col :span="6">
-      <div class="data_option">
-        <el-select
-          class="probe"
-          v-model="value"
-          clearable
-          placeholder="請選擇 probe "
-        >
-          <el-option
-            v-for="item in options"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
-          >
-          </el-option>
-        </el-select>
-      </div>
-    </el-col>
-  </el-row>
-
-  <el-row class="row_info">
-    <el-col :span="8" class="col_info">
       <el-card class="box-card" shadow="hover">
         <div class="card-header">
-          <span>電力資訊</span>
+          <span>{{ tab }}資訊</span>
         </div>
-        <div class="card-content">
-          <pre><p>電壓狀態： &emsp;{{ infoV }} </p></pre>
-          <pre><p>目前電壓： &emsp;{{ nowV }}  V</p></pre>
-          <pre><p>目前電流： &emsp;{{ nowCur }}  A</p></pre>
-          <pre><p>累積瓦數： &emsp;{{ total_watts }}  W</p></pre>
-        </div>
-      </el-card>
-    </el-col>
 
-    <el-col :span="15" class="col_bar">
-      <el-card class="box-card" shadow="hover">
-        <div class="bar" style="max-width: 4500px">
-          <vue3-chart-js ref="barChartRef" v-bind="{ ...barChart }" />
+        <div class="card-content">
+          <p>{{ tab }}狀態：{{ state }}</p>
+          <p>狀態內容：</p>
+          <p>{{ stateInfo }}</p>
+          <p>目前{{ tab }}:</p>
+          <p>{{ now }}</p>
+          <p>最高{{ tab }}:</p>
+          <p>{{ max }}</p>
+          <p v-if="tabOption !== 'C'">最低{{ tab }}:</p>
+          <p>{{ min }}</p>
         </div>
       </el-card>
     </el-col>
@@ -66,30 +63,43 @@
 </template>
 
 <script setup>
-import { ref, reactive } from "vue";
+import { ref, reactive, onMounted, onUnmounted } from "vue";
 import Vue3ChartJs from "@j-t-mcc/vue3-chartjs";
 import zoomPlugin from "chartjs-plugin-zoom";
 Vue3ChartJs.registerGlobalPlugins([zoomPlugin]);
 
-const periodOption = ref("今日");
-
+// Data
+const tabOption = ref("V");
+const options = reactive([]);
+const value = ref("");
+const tab = ref("");
+const state = ref("");
+const stateInfo = ref("");
+const now = ref("");
+const max = ref("");
+const min = ref("");
+const lineChartRef = ref(null);
 const lineChart = {
   type: "line",
   data: {
+    labels: ["1", "2", "3", "4"],
     datasets: [
       {
         label: "電壓",
-        data: [65, 59, 80, 81, 56, 55, 40, 60, 40, 30, 22, 73],
+        data: [],
         fill: false,
         borderColor: "rgba(96, 100, 107, 0.858)",
         backgroundColor: "while",
       },
       {
-        label: "電流",
-        data: [70, 25, 10, 90, 5, 60, 30, 80, 30, 50, 120, 21],
+        label: "上限",
+        data: [],
         fill: false,
-        borderColor: "rgba(38, 145, 227, 0.742)",
-        tension: 0.5,
+      },
+      {
+        label: "下限",
+        data: [],
+        fill: false,
       },
     ],
   },
@@ -104,155 +114,208 @@ const lineChart = {
     },
   },
 };
+const electronicDatas = [];
 
+// Setup
+const probes = getProbes();
+probes.forEach(function (probe) {
+  options.push({
+    value: probe,
+    label: probe,
+  });
+});
+value.value = probes[0];
+const elec = getElec();
+electronicDatas.push(elec);
 
-const options = reactive([
-  {
-    value: "4",
-    label: "4",
-  },
-  {
-    value: "7",
-    label: "7",
-  },
-  {
-    value: "8",
-    label: "8",
-  },
-]);
+onMounted(() => {
+  updateData();
+});
 
-const value = ref("");
+onUnmounted(() => {
+  clearInterval(timer);
+});
 
-const lineChartRef = ref(null);
-const barChartRef = ref(null);
+const timer = setInterval(() => {
+  const elec = getElec();
+  electronicDatas.push(elec);
+  updateData();
+}, 5000);
 
-function changePeriod(value) {
-  lineChart.data.labels = generateLabels(value);
-  barChart.data.labels = generateLabels(value);
-  lineChartRef.value.update(750);
-  barChartRef.value.update(750)
+// Functions
+function updateData() {
+  updateChart();
+  updateInfo();
 }
+function updateChart() {
+  lineChart.data.labels = electronicDatas.map((data) => {
+    return data[value.value][tabOption.value].time;
+  });
+  lineChart.data.datasets.forEach((dataset) => {
+    dataset.data = [];
+  });
 
-function generateLabels(period) {
-  if (period == 0) {
-    const currentHour = new Date().getHours();
-    var temp = currentHour;
-    const list = [];
-    for (var i = 0; i < 24; i++) {
-      list.push(temp.toString());
-      temp--;
-      if (temp == 0) {
-        temp = 24;
-      }
-    }
-    return list.reverse();
-  } else if (period == 1) {
-    const time = new Date();
-    var month = time.getMonth();
-    var date = time.getDate();
-    const list = [];
-    const bigMonth = [0, 2, 4, 6, 7, 9, 11];
-    const smallMonth = [3, 5, 8, 10];
-    for (var i = 0; i < 7; i++) {
-      list.push(`${month + 1}/${date}`);
-      date--;
-      if (date == 0) {
-        if (bigMonth.includes(month - 1)) {
-          date = 31;
-        } else if (smallMonth.includes(month - 1)) {
-          date = 30;
-        } else {
-          date = 28;
-        }
-        month--;
-      }
-    }
-    return list.reverse();
-  } else if (period == 2) {
-    const time = new Date();
-    var month = time.getMonth();
-    var date = time.getDate();
-    const list = [];
-    const bigMonth = [0, 2, 4, 6, 7, 9, 11];
-    const smallMonth = [3, 5, 8, 10];
-    for (var i = 0; i < 30; i++) {
-      list.push(`${month + 1}/${date}`);
-      date--;
-      if (date == 0) {
-        if (bigMonth.includes(month - 1)) {
-          date = 31;
-        } else if (smallMonth.includes(month - 1)) {
-          date = 30;
-        } else {
-          date = 28;
-        }
-        month--;
-      }
-    }
-    return list.reverse();
-  } else if (period == 3) {
-    const time = new Date();
-    var month = time.getMonth();
-    var date = time.getDate();
-    const list = [];
-    const bigMonth = [0, 2, 4, 6, 7, 9, 11];
-    const smallMonth = [3, 5, 8, 10];
-    for (var i = 0; i < 12; i++) {
-      list.push(`${month + 1}/${date}`);
-      date -= 7;
-      if (date <= 0) {
-        if (bigMonth.includes(month - 1)) {
-          date += 31;
-        } else if (smallMonth.includes(month - 1)) {
-          date += 30;
-        } else {
-          date += 28;
-        }
-        month--;
-      }
-    }
-    return list.reverse();
+  lineChart.data.datasets[0].data = electronicDatas.map((data) => {
+    return data[value.value][tabOption.value].value;
+  });
+  lineChart.data.datasets[1].data = electronicDatas.map((data) => {
+    return data[value.value][tabOption.value].upperlimit;
+  });
+
+  if (tabOption.value === "V") {
+    lineChart.data.datasets[0].label = "電壓";
+  } else if (tabOption.value === "C") {
+    lineChart.data.datasets[0].label = "電流";
+  } else {
+    lineChart.data.datasets[0].label = "功耗";
   }
-}
-const infoV = ref("正常");
-const nowV = ref(110);
-const nowCur = ref(27);
-const total_watts = ref(3000);
 
-const barChart = {
-  type: "bar",
-  options: {
-    min: 0,
-    max: 100,
-    responsive: true,
-    plugins: {
-      legend: {
-        position: "top",
+  if (tabOption.value !== "C") {
+    const data = electronicDatas.map((data) => {
+      return data[value.value][tabOption.value].lowerlimit;
+    });
+    if (lineChart.data.datasets[2] == null) {
+      lineChart.data.datasets[2] = {
+        label: "下限",
+        data: data,
+        fill: false,
+      };
+    } else {
+      lineChart.data.datasets[2].data = data;
+    }
+  } else {
+    lineChart.data.datasets.splice(2, 1);
+  }
+
+  lineChartRef.value.update(250);
+}
+function updateInfo() {
+  if (tabOption.value === "V") {
+    tab.value = "電壓";
+  } else if (tabOption.value === "C") {
+    tab.value = "電流";
+  } else if (tabOption.value === "P") {
+    tab.value = "功耗";
+  }
+  const stateNo =
+    electronicDatas[electronicDatas.length - 1][value.value][tabOption.value]
+      .warntype;
+  switch (stateNo) {
+    case 0:
+      state.value = "安全";
+      break;
+    case 1:
+      state.value = "警告";
+      break;
+    case 2:
+      state.value = "異常";
+      break;
+    case 3:
+      state.value = "緊急";
+      break;
+  }
+  stateInfo.value =
+    electronicDatas[electronicDatas.length - 1][value.value][
+      tabOption.value
+    ].warninfo;
+
+  now.value =
+    electronicDatas[electronicDatas.length - 1][value.value][
+      tabOption.value
+    ].value;
+  max.value =
+    electronicDatas[electronicDatas.length - 1][value.value][
+      tabOption.value
+    ].upperlimit;
+  min.value =
+    electronicDatas[electronicDatas.length - 1][value.value][
+      tabOption.value
+    ].lowerlimit;
+}
+
+// API
+function getProbes() {
+  return [4, 5, 6];
+}
+function getElec() {
+  return {
+    4: {
+      V: {
+        time: "00:00",
+        value: Math.random() * 100,
+        warntype: 0,
+        warninfo: "xxxx",
+        upperlimit: 80 + Math.random() * 20,
+        lowerlimit: Math.random() * 20,
+      },
+      C: {
+        time: "00:00",
+        value: Math.random() * 100,
+        warntype: 0,
+        warninfo: "xxxx",
+        upperlimit: 80 + Math.random() * 20,
+      },
+      P: {
+        time: "00:00",
+        value: Math.random() * 100,
+        warntype: 0,
+        warninfo: "xxxx",
+        upperlimit: 80 + Math.random() * 20,
+        lowerlimit: Math.random() * 20,
       },
     },
-    scales: {
-      y: {
-        min: 0,
-        max: 100,
-        ticks: {
-          callback: function (value) {
-            return `${value}`;
-          },
-        },
+    5: {
+      V: {
+        time: "00:00",
+        value: Math.random() * 100,
+        warntype: 0,
+        warninfo: "xxxx",
+        upperlimit: 80 + Math.random() * 20,
+        lowerlimit: Math.random() * 20,
+      },
+      C: {
+        time: "00:00",
+        value: 100,
+        warntype: 0,
+        warninfo: "xxxx",
+        upperlimit: 80 + Math.random() * 20,
+      },
+      P: {
+        time: "00:00",
+        value: Math.random() * 100,
+        warntype: 0,
+        warninfo: "xxxx",
+        upperlimit: 80 + Math.random() * 20,
+        lowerlimit: Math.random() * 20,
       },
     },
-  },
-  data: {
-    labels: ["1", "2", "3", "4"],
-    datasets: [
-      {
-        label: "累計瓦數",
-        backgroundColor: ["#FF9797", "#6FB7B7", "#84C1FF	", "#bdc3c7"],
-        data: [40, 20, 50, 10],
+    6: {
+      V: {
+        time: "00:00",
+        value: Math.random() * 100,
+        warntype: 0,
+        warninfo: "xxxx",
+        upperlimit: 80 + Math.random() * 20,
+        lowerlimit: Math.random() * 20,
       },
-    ],
-  },
-};
+      C: {
+        time: "00:00",
+        value: Math.random() * 100,
+        warntype: 0,
+        warninfo: "xxxx",
+        upperlimit: 80 + Math.random() * 20,
+      },
+      P: {
+        time: "00:00",
+        value: Math.random() * 100,
+        warntype: 0,
+        warninfo: "xxxx",
+        upperlimit: 80 + Math.random() * 20,
+        lowerlimit: Math.random() * 20,
+      },
+    },
+  };
+}
 </script>
 
 <style lang='scss' scoped>
@@ -261,10 +324,10 @@ const barChart = {
   width: 100% !important;
   height: 100% !important;
 }
-.period {
+.tab {
   text-align: center;
   :deep .el-radio-button__inner {
-    padding: 9px 16px;
+    padding: 10px 20px;
     color: rgb(120, 120, 120);
   }
   :deep .el-radio-button__orig-radio:checked + .el-radio-button__inner {
@@ -274,45 +337,45 @@ const barChart = {
     color: #fff;
   }
 }
-.data_option {
-  margin: 100px 10px;
-  text-align: center;
+
+.options {
+  text-align: left;
+}
+.tabs {
+  margin: 28px 10px;
 }
 .probe {
-  margin: 8px 0px;
+  margin: 0px 10px;
 }
 .card-header {
+  font-size: 20px;
+  margin: 10px 10px 30px 10px;
   display: flex;
+  justify-content: center;
   color: rgb(109, 108, 108);
 }
 .box-card {
-  width: 100%;
-  height: 90%;
+  margin: 92px 20px 10px 20px;
+  height: 83%;
 }
-.col_info {
-  margin: 10px 3px;
-  display: inline-flex;
-  justify-self: center;
-}
+
 .card-content {
   text-align: left;
   color: rgb(109, 108, 108);
   font-size: 16px;
-  padding: 20px 80px;
+  margin: 16px;
 }
-.row_info {
-  padding: 0 30px;
-}
+
 .col_bar {
-  padding: 10px 20px;
+  padding: 20px 40px 20px 20px;
+  margin: 20px 10px;
 }
-.bar{
-  padding: 0 0 20px 0;
-  text-align: center;
-  height: 150px;
-  width: 400px;
+
+.el-card__body {
+  padding: 20px;
 }
-.el-card__body{
-  padding:20px;
+.line_chart {
+  padding: 20px;
+  margin: 0px 10px;
 }
 </style>

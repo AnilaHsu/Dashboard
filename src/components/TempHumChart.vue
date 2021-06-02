@@ -2,108 +2,119 @@
   <el-row>
     <el-col :span="18">
       <div class="chart">
-        <div class="preiod" style="margin-top: 20px">
-          <el-radio-group
-            v-model="preiodOption"
-            style="margin-bottom: 30px"
-            @change="changePeriod"
-          >
-            <el-radio-button label="0">今日</el-radio-button>
-            <el-radio-button label="1">過去一週</el-radio-button>
-            <el-radio-button label="2">過去一個月</el-radio-button>
-            <el-radio-button label="3">過去三個月</el-radio-button>
-          </el-radio-group>
+        <div class="opions">
+          <span class="data_option">
+            <el-select
+              class="gateway"
+              v-model="value"
+              clearable
+              placeholder="請選擇 gateway"
+              @change="getGateways"
+            >
+              <el-option
+                v-for="item in options"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              >
+              </el-option>
+            </el-select>
+            <el-select
+              v-model="value1"
+              clearable
+              placeholder="請選擇 sensor"
+              @change="updateData"
+            >
+              <el-option
+                v-for="item in options1"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              >
+              </el-option>
+            </el-select>
+          </span>
+          <span class="tab" style="margin-top: 20px">
+            <el-radio-group
+              class="tabs"
+              v-model="tabOption"
+              style="margin-bottom: 30px"
+              @change="updateData"
+            >
+              <el-radio-button label="T">溫度</el-radio-button>
+              <el-radio-button label="H">濕度</el-radio-button>
+            </el-radio-group>
+          </span>
         </div>
-        <div>
-          <vue3-chart-js ref="chartRef" v-bind="{ ...lineChart }" />
-        </div>
+
+        <el-card class="line-chart">
+          <vue3-chart-js ref="lineChartRef" v-bind="{ ...lineChart }" />
+        </el-card>
       </div>
     </el-col>
 
     <el-col :span="6">
-      <div class="data_option">
-        <el-select
-          class="gateway"
-          v-model="value"
-          clearable
-          placeholder="請選擇 gateway "
-        >
-          <el-option
-            v-for="item in options"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
-          >
-          </el-option>
-        </el-select>
-        <el-select v-model="value1" clearable placeholder="請選擇 sensor ">
-          <el-option
-            v-for="item in options1"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
-          >
-          </el-option>
-        </el-select>
-      </div>
-    </el-col>
-  </el-row>
-
-  <el-row class="row_info"> 
-    <el-col :span="9" class="col_info">
-      <el-card class="box-card" shadow="hover">
-        <div class="card-header">
-          <span>溫度資訊</span>
-        </div>
-        <div class="card-content">
-          <pre><p>溫度狀態：{{ infoTemp }}</p></pre>
-          <pre><p>目前溫度：{{ nowTemp }} ˚C</p></pre>
-          <pre><p>最高溫度：{{ maxTemp }} ˚C</p></pre>
-          <pre><p>最低溫度：{{ minTemp }} ˚C</p></pre>
-        </div>
-      </el-card>
-    </el-col>
-    <el-col :span="9" class="col_info">
       <el-card class="box-card" shadow="hover">
         <div class="card-header">
           <span>濕度資訊</span>
         </div>
         <div class="card-content">
-          <pre><p>濕度狀態：{{ infoHum }}</p></pre>
-          <pre><p>目前濕度：{{ nowHum }} ％</p></pre>
-          <pre><p>最高濕度：{{ maxHum }} ％</p></pre>
-          <pre><p>最低濕度：{{ minHum }} ％</p></pre>
+          <p>{{ tab }}狀態：{{ state }}</p>
+          <p>狀態內容：</p>
+          <p>{{ stateInfo }}</p>
+          <p>目前{{ tab }}:</p>
+          <p>{{ now }}</p>
+          <p>最高{{ tab }}:</p>
+          <p>{{ max }}</p>
+          <p>最低{{ tab }}:</p>
+          <p>{{ min }}</p>
         </div>
       </el-card>
     </el-col>
   </el-row>
+
+  <el-row> </el-row>
 </template>
 
 <script setup>
-import { reactive, ref } from "vue";
+import { reactive, ref, onMounted,onUnmounted } from "vue";
 import Vue3ChartJs from "@j-t-mcc/vue3-chartjs";
 import zoomPlugin from "chartjs-plugin-zoom";
 Vue3ChartJs.registerGlobalPlugins([zoomPlugin]);
 
-const preiodOption = ref("今日");
-
+const tabOption = ref("T");
+const options = reactive([]);
+const value = ref("");
+const value1 = ref("");
+const options1 = reactive([]);
+const tab = ref("");
+const state = ref("");
+const stateInfo = ref("");
+const now = ref("");
+const max = ref("");
+const min = ref("");
+const lineChartRef = ref(null);
 const lineChart = {
   type: "line",
   data: {
+    labels: [],
     datasets: [
       {
-        label: "電壓",
-        data: [65, 59, 80, 81, 56, 55, 40, 60, 40, 30, 22, 73],
+        label: "",
+        data: [],
         fill: false,
         borderColor: "rgba(96, 100, 107, 0.858)",
         backgroundColor: "while",
       },
       {
-        label: "電流",
-        data: [70, 25, 10, 90, 5, 60, 30, 80, 30, 50, 120, 21],
+        label: "上限",
+        data: [],
         fill: false,
-        borderColor: "rgba(38, 145, 227, 0.742)",
-        tension: 0.5,
+      },
+      {
+        label: "下限",
+        data: [],
+        fill: false,
       },
     ],
   },
@@ -118,131 +129,156 @@ const lineChart = {
     },
   },
 };
+const TempHumData = [];
+const TempHum = getTempHum();
+TempHumData.push(TempHum);
 
-const options = reactive([
-  {
-    value: "4",
-    label: "4",
-  },
-  {
-    value: "5",
-    label: "5",
-  },
-  {
-    value: "6",
-    label: "6",
-  },
-]);
-
-const value = ref("");
-const value1 = ref("");
-const options1 = reactive([
-  {
-    value: "1297177",
-    label: " 1297177",
-  },
-  {
-    value: "1297184",
-    label: "1297184",
-  },
-]);
-
-const chartRef = ref(null);
-
-function changePeriod(value) {
-  lineChart.data.labels = generateLabels(value);
-  chartRef.value.update(750);
+function updateData() {
+  updateChart();
+  updateInfo();
 }
 
-function generateLabels(period) {
-  if (period == 0) {
-    const currentHour = new Date().getHours();
-    var temp = currentHour;
-    const list = [];
-    for (var i = 0; i < 24; i++) {
-      list.push(temp.toString());
-      temp--;
-      if (temp == 0) {
-        temp = 24;
-      }
-    }
-    return list.reverse();
-  } else if (period == 1) {
-    const time = new Date();
-    var month = time.getMonth();
-    var date = time.getDate();
-    const list = [];
-    const bigMonth = [0, 2, 4, 6, 7, 9, 11];
-    const smallMonth = [3, 5, 8, 10];
-    for (var i = 0; i < 7; i++) {
-      list.push(`${month + 1}/${date}`);
-      date--;
-      if (date == 0) {
-        if (bigMonth.includes(month - 1)) {
-          date = 31;
-        } else if (smallMonth.includes(month - 1)) {
-          date = 30;
-        } else {
-          date = 28;
-        }
-        month--;
-      }
-    }
-    return list.reverse();
-  } else if (period == 2) {
-    const time = new Date();
-    var month = time.getMonth();
-    var date = time.getDate();
-    const list = [];
-    const bigMonth = [0, 2, 4, 6, 7, 9, 11];
-    const smallMonth = [3, 5, 8, 10];
-    for (var i = 0; i < 30; i++) {
-      list.push(`${month + 1}/${date}`);
-      date--;
-      if (date == 0) {
-        if (bigMonth.includes(month - 1)) {
-          date = 31;
-        } else if (smallMonth.includes(month - 1)) {
-          date = 30;
-        } else {
-          date = 28;
-        }
-        month--;
-      }
-    }
-    return list.reverse();
-  } else if (period == 3) {
-    const time = new Date();
-    var month = time.getMonth();
-    var date = time.getDate();
-    const list = [];
-    const bigMonth = [0, 2, 4, 6, 7, 9, 11];
-    const smallMonth = [3, 5, 8, 10];
-    for (var i = 0; i < 12; i++) {
-      list.push(`${month + 1}/${date}`);
-      date -= 7;
-      if (date <= 0) {
-        if (bigMonth.includes(month - 1)) {
-          date += 31;
-        } else if (smallMonth.includes(month - 1)) {
-          date += 30;
-        } else {
-          date += 28;
-        }
-        month--;
-      }
-    }
-    return list.reverse();
+onMounted(() => {
+  updateData();
+});
+onUnmounted(() => {
+  clearInterval(timer)
+})
+
+const timer = setInterval(() => {
+  const TempHum = getTempHum();
+  TempHumData.push(TempHum);
+  updateData();
+}, 5000);
+
+function updateChart() {
+  lineChart.data.labels = TempHumData.map((data) => {
+    console.log(data[value1.value][tabOption.value])
+    console.log()
+    return data[value1.value][tabOption.value].time;
+  });
+  lineChart.data.datasets[0].data = TempHumData.map((data) => {
+    return data[value1.value][tabOption.value].value;
+  });
+  lineChart.data.datasets[1].data = TempHumData.map((data) => {
+    return data[value1.value][tabOption.value].upperlimit;
+  });
+  lineChart.data.datasets[2].data = TempHumData.map((data) => {
+    return data[value1.value][tabOption.value].lowerlimit;
+  });
+  if (tabOption.value === "T") {
+    lineChart.data.datasets[0].label = "溫度";
+  } else if (tabOption.value === "H") {
+    lineChart.data.datasets[0].label = "濕度";
   }
+  lineChartRef.value.update(250);
 }
-const nowTemp = ref(25)
-const maxTemp = ref(36)
-const minTemp = ref(16)
-const nowHum = ref(15)
-const maxHum = ref(20)
-const minHum = ref(10)
-const infoTemp = ref ("正常")
-const infoHum = ref ("正常")
+function updateInfo() {
+  if (tabOption.value === "T") {
+    tab.value = "溫度";
+  } else if (tabOption.value === "C") {
+    tab.value = "濕度";
+  }
+  const stateNo =
+    TempHumData[TempHumData.length - 1][value1.value][tabOption.value]
+      .warntype;
+  switch (stateNo) {
+    case 0:
+      state.value = "安全";
+      break;
+    case 1:
+      state.value = "警告";
+      break;
+    case 2:
+      state.value = "異常";
+      break;
+    case 3:
+      state.value = "緊急";
+      break;
+  }
+
+  stateInfo.value =
+    TempHumData[TempHumData.length - 1][value1.value][
+      tabOption.value
+    ].warninfo;
+  now.value =
+    TempHumData[TempHumData.length - 1][value1.value][
+      tabOption.value
+    ].value;
+  max.value =
+    TempHumData[TempHumData.length - 1][value1.value][
+      tabOption.value
+    ].upperlimit;
+  min.value =
+    TempHumData[TempHumData.length - 1][value1.value][
+      tabOption.value
+    ].lowerlimit;
+}
+
+function getGateways() {
+  return [4, 7, 8, 9, 12, 13, 15, 16, 20, 22, 25];
+}
+const gateways = getGateways();
+gateways.forEach((gateway) => {
+  options.push({
+    value: gateway,
+    label: gateway,
+  });
+});
+value.value = gateways[0];
+
+function getSensors(value) {
+  return [1297177, 1297184];
+}
+const sensors = getSensors();
+sensors.forEach(function (sensor) {
+  options1.push({
+    value: sensor,
+    label: sensor,
+  });
+});
+value1.value = sensors[0];
+
+function getTempHum(value) {
+  return {
+    1297177: {
+      T: {
+        time: "00:00",
+        value: 30,
+        warntype: 0,
+        warninfo: "xxxx",
+        upperlimit: 40,
+        lowerlimit: 20,
+      },
+      H: {
+        time: "00:00",
+        value: 30,
+        warntype: 0,
+        warninfo: "xxxx",
+        upperlimit: 30,
+        lowerlimit: 12,
+      },
+    },
+    1297184: {
+      T: {
+        time: "00:00",
+        value: 30,
+        warntype: 0,
+        warninfo: "xxxx",
+        upperlimit: 40,
+        lowerlimit: 20,
+      },
+      H: {
+        time: "00:00",
+        value: 30,
+        warntype: 0,
+        warninfo: "xxxx",
+        upperlimit: 30,
+        lowerlimit: 12,
+      },
+    },
+  };
+}
 </script>
 
 
@@ -253,10 +289,10 @@ const infoHum = ref ("正常")
   height: 100% !important;
 }
 
-.preiod {
+.tab {
   text-align: center;
   :deep .el-radio-button__inner {
-    padding: 9px 16px;
+    padding: 10px 20px;
     color: rgb(136, 136, 136);
   }
   :deep .el-radio-button__orig-radio:checked + .el-radio-button__inner {
@@ -266,36 +302,37 @@ const infoHum = ref ("正常")
     color: #fff;
   }
 }
-.data_option {
-  margin: 100px 10px;
-  text-align: center;
-}
+
 .gateway {
-  margin: 8px 0px;
+  margin: 0 10px;
 }
 .card-header {
+  font-size: 20px;
+  margin: 10px 10px 30px 10px;  
   display: flex;
+  justify-content: center;
   color: rgb(109, 108, 108);
-  font-size: 16px;
 }
 .box-card {
-  width: 100%;
-  height: 90%;
+  margin: 92px 20px 10px 20px;
+  height: 83%;
 }
-.col_info {
-  margin: 10px 3px;
-  display: inline-flex;
-  justify-self: center;
-  padding: 0 8px;
+.options {
+  text-align: left;
+}
+.tabs {
+  margin: 28px 10px;
+}
 
-}
 .card-content {
   text-align: left;
   color: rgb(109, 108, 108);
   font-size: 16px;
-  padding: 0 0 10px 120px;
+  margin: 16px;
 }
-.row_info{
-  padding: 0 30px;
+
+.line-chart {
+  padding: 20px;
+  margin: 0px 10px;
 }
 </style>
