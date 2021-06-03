@@ -205,7 +205,7 @@ function updateInfo() {
       state.value = "安全";
       break;
     case 1:
-      state.value = "警告";
+      state.value = "注意";
       break;
     case 2:
       state.value = "異常";
