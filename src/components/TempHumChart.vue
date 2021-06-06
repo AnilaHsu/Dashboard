@@ -1,50 +1,50 @@
 <template>
   <el-row>
-    <el-col :span="18">
-      <div class="chart">
-        <div class="options">
-          <span class="data_option">
-            <el-select
-              class="gateway"
-              v-model="value"
-              clearable
-              placeholder="請選擇 gateway"
-              @change="getGateways"
-            >
-              <el-option
-                v-for="item in options"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
-              >
-              </el-option>
-            </el-select>
-          </span>
-          <span>
-            <el-select
-              v-model="value1"
-              clearable
-              placeholder="請選擇 sensor"
-              @change="updateData"
-            >
-              <el-option
-                v-for="item in options1"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
-              >
-              </el-option>
-            </el-select>
-          </span>
-        </div>
+    <div class="options">
+      <span class="data_option">
+        <el-select
+          class="gateway"
+          v-model="value"
+          clearable
+          placeholder="請選擇 gateway"
+          @change="getGateways"
+        >
+          <el-option
+            v-for="item in options"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          >
+          </el-option>
+        </el-select>
+      </span>
+      <span>
+        <el-select
+          v-model="value1"
+          clearable
+          placeholder="請選擇 sensor"
+          @change="updateData"
+        >
+          <el-option
+            v-for="item in options1"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          >
+          </el-option>
+        </el-select>
+      </span>
+    </div>
+  </el-row>
 
-        <el-card class="line-chart">
-          <vue3-chart-js ref="lineChartRef" v-bind="{ ...lineChart }" />
-        </el-card>
-      </div>
+  <el-row>
+    <el-col :span="16">
+      <el-card class="line-chart" shadow="hover">
+        <vue3-chart-js ref="lineChartRef" v-bind="{ ...lineChart }" />
+      </el-card>
     </el-col>
 
-    <el-col :span="6">
+    <el-col :span="8">
       <el-card class="box-card" shadow="hover">
         <div class="card-header">
           <span>濕度資訊</span>
@@ -53,18 +53,13 @@
           <p>{{ tab }}狀態：{{ state }}</p>
           <p>狀態內容：</p>
           <p>{{ stateInfo }}</p>
-          <p>目前{{ tab }}：</p>
-          <p>{{ now }}</p>
-          <p>注意上限：</p>
-          <p>{{ upper2 }}</p>
-          <p>注意下限：</p>
-          <p>{{ lower2 }}</p>
+          <p>目前{{ tab }}：{{ now }}</p>
+          <p>注意上限：{{ upper2 }}</p>
+          <p>注意下限：{{ lower2 }}</p>
         </div>
       </el-card>
     </el-col>
   </el-row>
-
-  <el-row> </el-row>
 </template>
 
 <script setup>
@@ -95,55 +90,54 @@ const lineChart = {
         label: "",
         data: [],
         fill: false,
-        borderColor: "#9e9e9e",
+        borderColor: "#707070",
       },
       {
         label: "安全上限",
         data: [],
         fill: false,
-        borderColor: "#fdd835",
+        borderColor: "#689f38",
+        borderDash: [3, 5],
       },
       {
         label: "安全下限",
         data: [],
         fill: false,
-        borderColor: "#fdd835",
+        borderColor: "#689f38",
+        borderDash: [3, 5],
       },
       {
         label: "注意上限",
         data: [],
         fill: false,
-        borderColor: "#ff9800",
+        borderColor: "#ffb74d",
+        borderDash: [6, 5],
       },
       {
         label: "注意下限",
         data: [],
         fill: false,
-        borderColor: "#ff9800",
+        borderColor: "#ffb74d",
+        borderDash: [6, 5],
       },
       {
         label: "物理界線1",
         data: [],
         fill: false,
+        borderColor: "#ff867c",
+        borderDash: [11, 5],
       },
       {
         label: "物理界線2",
         data: [],
         fill: false,
+        borderColor: "#ff867c",
+        borderDash: [11, 5],
       },
     ],
   },
-  options: {
-    plugins: {
-      zoom: {
-        zoom: {
-          enabled: true,
-          mode: "y",
-        },
-      },
-    },
-  },
 };
+
 const TempHumData = [];
 const TempHum = getTempHum();
 TempHumData.push(...TempHum);
@@ -322,41 +316,44 @@ function getTempHum(sensor) {
 </script>
 
 <style lang="scss" scoped>
-.chart {
-  display: inline-block !important;
-  width: 100% !important;
-  height: 100% !important;
-}
+
 
 .gateway {
   margin: 0 10px;
 }
 .card-header {
   font-size: 20px;
-  margin: 10px 10px 30px 10px;
+  margin: 10px 10px 40px 10px;
   display: flex;
   justify-content: center;
   color: rgb(87, 87, 87);
+   font-style: bold;
 }
+.card-content {
+  text-align: left;
+  color: rgb(109, 108, 108);
+  font-size: 16px;
+  margin: 0px  70px;
+}
+
+
+.line-chart {
+  height: 100%;
+  margin: 10px;
+}
+
 .box-card {
-  margin: 92px 20px 10px 20px;
-  height: 83%;
+  height: 100%;
+  margin: 10px;
 }
+
+
 
 :deep .options {
   text-align: left;
   margin: 28px 10px !important;
 }
 
-.card-content {
-  text-align: left;
-  color: rgb(109, 108, 108);
-  font-size: 16px;
-  margin: 16px;
-}
 
-.line-chart {
-  padding: 20px;
-  margin: 0px 10px;
-}
+
 </style>

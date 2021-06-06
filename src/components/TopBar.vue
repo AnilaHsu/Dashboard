@@ -71,16 +71,16 @@ function color(type) {
 }
 
 const list = [
-  { type: "1", title: "警訊回報", content: "警訊內容" },
-  { type: "2", title: "可疑回報", content: "可疑內容" },
-  { type: "3", title: "定期回報", content: "定期內容" },
+  { type: "1", title: "注意", content: "內容" },
+  { type: "2", title: "異常", content: "內容" },
+  { type: "3", title: "緊急", content: "內容" },
 ];
 </script>
 
 <style lang="scss" scoped>
 .title {
-  font-size: 20px;
-  font-weight: bold;
+  font-size: 22px;
+  font-weight:bolder;
   color: rgb(104, 104, 104);
   text-align: left;
 }
