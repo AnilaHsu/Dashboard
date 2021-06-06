@@ -50,12 +50,13 @@
           <p>{{ tab }}狀態：{{ state }}</p>
           <p>狀態內容：</p>
           <p>{{ stateInfo }}</p>
-          <p>目前{{ tab }}:</p>
+          <p>目前{{ tab }}：</p>
           <p>{{ now }}</p>
-          <p>最高{{ tab }}:</p>
-          <p>{{ max }}</p>
-          <p v-if="tabOption !== 'C'">最低{{ tab }}:</p>
-          <p>{{ min }}</p>
+          <p>注意上限：</p>
+          <p>{{ upper2 }}</p>
+
+          <p v-if="tabOption !== 'C'">注意下限：</p>
+          <p>{{ lower2 }}</p>
         </div>
       </el-card>
     </el-col>
@@ -76,8 +77,10 @@ const tab = ref("");
 const state = ref("");
 const stateInfo = ref("");
 const now = ref("");
-const max = ref("");
-const min = ref("");
+const upper1 = ref("");
+const lower1 = ref("");
+const upper2 = ref("");
+const lower2 = ref("");
 const lineChartRef = ref(null);
 const lineChart = {
   type: "line",
@@ -88,30 +91,41 @@ const lineChart = {
         label: "電壓",
         data: [],
         fill: false,
-        borderColor: "rgba(96, 100, 107, 0.858)",
-        backgroundColor: "while",
+        borderColor: "#9e9e9e",
       },
       {
-        label: "上限",
+        label: "安全上限",
         data: [],
         fill: false,
+        borderColor: "#fdd835",
       },
       {
-        label: "下限",
+        label: "安全下限",
         data: [],
         fill: false,
+        borderColor: "#fdd835",
+        hidden: false,
+      },
+      {
+        label: "注意上限",
+        data: [],
+        fill: false,
+        borderColor: "#ff9800",
+      },
+      {
+        label: "注意下限",
+        data: [],
+        fill: false,
+        borderColor: "#ff9800",
+        hidden: false,
+      },
+      {
+        label: "物理界線",
+        data: "",
+        fill: false,
+        hidden: false,
       },
     ],
-  },
-  options: {
-    plugins: {
-      zoom: {
-        zoom: {
-          enabled: true,
-          mode: "y",
-        },
-      },
-    },
   },
 };
 const electronicDatas = [];
@@ -126,7 +140,7 @@ probes.forEach(function (probe) {
 });
 value.value = probes[0];
 const elec = getElec();
-electronicDatas.push(elec);
+electronicDatas.push(...elec);
 
 onMounted(() => {
   updateData();
@@ -137,8 +151,9 @@ onUnmounted(() => {
 });
 
 const timer = setInterval(() => {
+  const electronicDatas = [];
   const elec = getElec();
-  electronicDatas.push(elec);
+  electronicDatas.push(...elec);
   updateData();
 }, 5000);
 
@@ -148,47 +163,48 @@ function updateData() {
   updateInfo();
 }
 function updateChart() {
+  // update label
   lineChart.data.labels = electronicDatas.map((data) => {
-    return data[value.value][tabOption.value].time;
+    return data[tabOption.value].index_date;
   });
-  lineChart.data.datasets.forEach((dataset) => {
-    dataset.data = [];
-  });
-
-  lineChart.data.datasets[0].data = electronicDatas.map((data) => {
-    return data[value.value][tabOption.value].value;
-  });
-  lineChart.data.datasets[1].data = electronicDatas.map((data) => {
-    return data[value.value][tabOption.value].upperlimit;
-  });
-
-  if (tabOption.value === "V") {
-    lineChart.data.datasets[0].label = "電壓";
-  } else if (tabOption.value === "C") {
-    lineChart.data.datasets[0].label = "電流";
-  } else {
-    lineChart.data.datasets[0].label = "功耗";
-  }
-
-  if (tabOption.value !== "C") {
-    const data = electronicDatas.map((data) => {
-      return data[value.value][tabOption.value].lowerlimit;
-    });
-    if (lineChart.data.datasets[2] == null) {
-      lineChart.data.datasets[2] = {
-        label: "下限",
-        data: data,
-        fill: false,
-      };
-    } else {
-      lineChart.data.datasets[2].data = data;
-    }
-  } else {
-    lineChart.data.datasets.splice(2, 1);
-  }
-
+  updateLine();
   lineChartRef.value.update(250);
 }
+function updateLine() {
+  const tab = tabOption.value;
+  lineChart.data.datasets[0].data = electronicDatas.map((data) => {
+    return data[tabOption.value].value;
+  });
+  lineChart.data.datasets[1].data = electronicDatas.map((data) => {
+    return data[tabOption.value].ai_power_upperbound1;
+  });
+  if (tab !== "C") {
+    lineChart.data.datasets[2].hidden = false;
+    lineChart.data.datasets[2].data = electronicDatas.map((data) => {
+      return data[tabOption.value].ai_power_lowerbound1;
+    });
+  } else {
+    lineChart.data.datasets[2].hidden = true;
+  }
+  lineChart.data.datasets[3].data = electronicDatas.map((data) => {
+    return data[tabOption.value].ai_power_upperbound2;
+  });
+  if (tab !== "C") {
+    lineChart.data.datasets[4].hidden = false;
+    lineChart.data.datasets[4].data = electronicDatas.map((data) => {
+      return data[tabOption.value].ai_power_lowerbound2;
+    });
+  } else {
+    lineChart.data.datasets[4].hidden = true;
+  }
+  if (tab !== "P") {
+    lineChart.data.datasets[5].hidden = false;
+    lineChart.data.datasets[5].data = Array(3).fill(10);
+  } else {
+    lineChart.data.datasets[5].hidden = true;
+  }
+}
+
 function updateInfo() {
   if (tabOption.value === "V") {
     tab.value = "電壓";
@@ -198,8 +214,7 @@ function updateInfo() {
     tab.value = "功耗";
   }
   const stateNo =
-    electronicDatas[electronicDatas.length - 1][value.value][tabOption.value]
-      .warntype;
+    electronicDatas[electronicDatas.length - 1][tabOption.value].alarm_level;
   switch (stateNo) {
     case 0:
       state.value = "安全";
@@ -215,106 +230,155 @@ function updateInfo() {
       break;
   }
   stateInfo.value =
-    electronicDatas[electronicDatas.length - 1][value.value][
-      tabOption.value
-    ].warninfo;
+    electronicDatas[electronicDatas.length - 1][tabOption.value].warninfo;
 
   now.value =
-    electronicDatas[electronicDatas.length - 1][value.value][
+    electronicDatas[electronicDatas.length - 1][tabOption.value].value;
+  upper2.value =
+    electronicDatas[electronicDatas.length - 1][
       tabOption.value
-    ].value;
-  max.value =
-    electronicDatas[electronicDatas.length - 1][value.value][
+    ].ai_power_upperbound2;
+  lower2.value =
+    electronicDatas[electronicDatas.length - 1][
       tabOption.value
-    ].upperlimit;
-  min.value =
-    electronicDatas[electronicDatas.length - 1][value.value][
+    ].ai_power_lowerbound2;
+  upper1.value =
+    electronicDatas[electronicDatas.length - 1][
       tabOption.value
-    ].lowerlimit;
+    ].ai_power_upperbound1;
+  lower2.value =
+    electronicDatas[electronicDatas.length - 1][
+      tabOption.value
+    ].ai_power_lowerbound1;
+
+  if (tabOption.value === "V") {
+    if (now.value > upper2.value) {
+      stateInfo.value = "電壓狀態嚴重高於限制，可能造成設備損壞";
+    } else if (now.value < lower2.value) {
+      stateInfo.value = "電壓狀態嚴重低於限制，可能造成設備損壞";
+    } else if (now.value > upper1.value) {
+      stateInfo.value = "電壓狀態高於限制!";
+    } else if (now.value < lower1.value) {
+      stateInfo.value = "電壓狀態低於限制!";
+    } else {
+      stateInfo.value = "電壓狀態正常";
+    }
+  } else if (tabOption.value === "C") {
+    if (now.value > upper2.value) {
+      stateInfo.value = "電流狀態嚴重高於限制";
+    } else if (now.value > upper1.value) {
+      stateInfo.value = "電流在未來30分鐘將有高機率超出範圍!";
+    } else {
+      stateInfo.value = "電流在在正常範圍";
+    }
+  } else if (tabOption.value === "P") {
+    if (now.value > upper2.value) {
+      stateInfo.value = "功率消耗異常，目前功率消耗高於預期";
+    } else if (now.value < lower2.value) {
+      stateInfo.value = "功率消耗異常，目前功率消耗低於預期";
+    } else if (now.value > upper1.value) {
+      stateInfo.value = "目前功率消耗高於預期";
+    } else if (now.value < lower1.value) {
+      stateInfo.value = "目前功率消耗低於預期";
+    } else {
+      stateInfo.value = "功率消耗正常";
+    }
+  }
 }
 
 // API
 function getProbes() {
   return [4, 5, 6];
 }
-function getElec() {
-  return {
-    4: {
+function getElec(probe) {
+  return [
+    {
       V: {
-        time: "00:00",
+        index_date: "00:00",
         value: Math.random() * 100,
-        warntype: 0,
+        alarm_level: 0,
         warninfo: "xxxx",
-        upperlimit: 80 + Math.random() * 20,
-        lowerlimit: Math.random() * 20,
+        ai_power_upperbound1: 80 + Math.random() * 20,
+        ai_power_lowerbound1: Math.random() * 20,
+        ai_power_upperbound2: 80 + Math.random() * 20,
+        ai_power_lowerbound2: Math.random() * 20,
       },
       C: {
-        time: "00:00",
+        index_date: "00:00",
         value: Math.random() * 100,
-        warntype: 0,
+        alarm_level: 0,
         warninfo: "xxxx",
-        upperlimit: 80 + Math.random() * 20,
+        ai_power_upperbound1: 80 + Math.random() * 20,
+        ai_power_upperbound2: 80 + Math.random() * 20,
       },
       P: {
-        time: "00:00",
+        index_date: "00:00",
         value: Math.random() * 100,
-        warntype: 0,
+        alarm_level: 0,
         warninfo: "xxxx",
-        upperlimit: 80 + Math.random() * 20,
-        lowerlimit: Math.random() * 20,
+        ai_power_upperbound1: 80 + Math.random() * 20,
+        ai_power_lowerbound1: Math.random() * 20,
+        ai_power_upperbound2: 80 + Math.random() * 20,
+        ai_power_lowerbound2: Math.random() * 20,
       },
     },
-    5: {
+    {
       V: {
-        time: "00:00",
+        index_date: "00:00",
         value: Math.random() * 100,
-        warntype: 0,
-        warninfo: "xxxx",
-        upperlimit: 80 + Math.random() * 20,
-        lowerlimit: Math.random() * 20,
+        alarm_level: 0,
+        ai_power_upperbound1: 80 + Math.random() * 20,
+        ai_power_lowerbound1: Math.random() * 20,
+        ai_power_upperbound2: 80 + Math.random() * 20,
+        ai_power_lowerbound2: Math.random() * 20,
       },
       C: {
-        time: "00:00",
+        index_date: "00:00",
         value: 100,
-        warntype: 0,
+        alarm_level: 0,
         warninfo: "xxxx",
-        upperlimit: 80 + Math.random() * 20,
+        ai_power_upperbound1: 80 + Math.random() * 20,
+        ai_power_upperbound2: 80 + Math.random() * 20,
       },
       P: {
-        time: "00:00",
+        index_date: "00:00",
         value: Math.random() * 100,
-        warntype: 0,
+        alarm_level: 0,
         warninfo: "xxxx",
-        upperlimit: 80 + Math.random() * 20,
-        lowerlimit: Math.random() * 20,
+        ai_power_upperbound1: 80 + Math.random() * 20,
+        ai_power_lowerbound1: Math.random() * 20,
+        ai_power_upperbound2: 80 + Math.random() * 20,
+        ai_power_lowerbound2: Math.random() * 20,
       },
     },
-    6: {
+    {
       V: {
-        time: "00:00",
+        index_date: "00:00",
         value: Math.random() * 100,
-        warntype: 0,
-        warninfo: "xxxx",
-        upperlimit: 80 + Math.random() * 20,
-        lowerlimit: Math.random() * 20,
+        alarm_level: 0,
+        ai_power_upperbound1: 80 + Math.random() * 20,
+        ai_power_lowerbound1: Math.random() * 20,
+        ai_power_upperbound2: 80 + Math.random() * 20,
+        ai_power_lowerbound2: Math.random() * 20,
       },
       C: {
-        time: "00:00",
+        index_date: "00:00",
         value: Math.random() * 100,
-        warntype: 0,
-        warninfo: "xxxx",
-        upperlimit: 80 + Math.random() * 20,
+        alarm_level: 0,
+        ai_power_upperbound1: 80 + Math.random() * 20,
+        ai_power_upperbound2: 80 + Math.random() * 20,
       },
       P: {
-        time: "00:00",
+        index_date: "00:00",
         value: Math.random() * 100,
-        warntype: 0,
-        warninfo: "xxxx",
-        upperlimit: 80 + Math.random() * 20,
-        lowerlimit: Math.random() * 20,
+        alarm_level: 0,
+        ai_power_upperbound1: 80 + Math.random() * 20,
+        ai_power_lowerbound1: Math.random() * 20,
+        ai_power_upperbound2: 80 + Math.random() * 20,
+        ai_power_lowerbound2: Math.random() * 20,
       },
     },
-  };
+  ];
 }
 </script>
 
@@ -352,7 +416,8 @@ function getElec() {
   margin: 10px 10px 30px 10px;
   display: flex;
   justify-content: center;
-  color: rgb(109, 108, 108);
+  color: rgb(87, 87, 87);
+  font-style: bold;
 }
 .box-card {
   margin: 92px 20px 10px 20px;

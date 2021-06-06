@@ -2,7 +2,7 @@
   <el-row>
     <el-col :span="18">
       <div class="chart">
-        <div class="opions">
+        <div class="options">
           <span class="data_option">
             <el-select
               class="gateway"
@@ -19,6 +19,8 @@
               >
               </el-option>
             </el-select>
+          </span>
+          <span>
             <el-select
               v-model="value1"
               clearable
@@ -33,17 +35,6 @@
               >
               </el-option>
             </el-select>
-          </span>
-          <span class="tab" style="margin-top: 20px">
-            <el-radio-group
-              class="tabs"
-              v-model="tabOption"
-              style="margin-bottom: 30px"
-              @change="updateData"
-            >
-              <el-radio-button label="T">溫度</el-radio-button>
-              <el-radio-button label="H">濕度</el-radio-button>
-            </el-radio-group>
           </span>
         </div>
 
@@ -62,12 +53,12 @@
           <p>{{ tab }}狀態：{{ state }}</p>
           <p>狀態內容：</p>
           <p>{{ stateInfo }}</p>
-          <p>目前{{ tab }}:</p>
+          <p>目前{{ tab }}：</p>
           <p>{{ now }}</p>
-          <p>最高{{ tab }}:</p>
-          <p>{{ max }}</p>
-          <p>最低{{ tab }}:</p>
-          <p>{{ min }}</p>
+          <p>注意上限：</p>
+          <p>{{ upper2 }}</p>
+          <p>注意下限：</p>
+          <p>{{ lower2 }}</p>
         </div>
       </el-card>
     </el-col>
@@ -77,12 +68,11 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted,onUnmounted } from "vue";
+import { reactive, ref, onMounted, onUnmounted } from "vue";
 import Vue3ChartJs from "@j-t-mcc/vue3-chartjs";
 import zoomPlugin from "chartjs-plugin-zoom";
 Vue3ChartJs.registerGlobalPlugins([zoomPlugin]);
 
-const tabOption = ref("T");
 const options = reactive([]);
 const value = ref("");
 const value1 = ref("");
@@ -91,8 +81,10 @@ const tab = ref("");
 const state = ref("");
 const stateInfo = ref("");
 const now = ref("");
-const max = ref("");
-const min = ref("");
+const upper1 = ref("");
+const lower1 = ref("");
+const upper2 = ref("");
+const lower2 = ref("");
 const lineChartRef = ref(null);
 const lineChart = {
   type: "line",
@@ -103,16 +95,39 @@ const lineChart = {
         label: "",
         data: [],
         fill: false,
-        borderColor: "rgba(96, 100, 107, 0.858)",
-        backgroundColor: "while",
+        borderColor: "#9e9e9e",
       },
       {
-        label: "上限",
+        label: "安全上限",
+        data: [],
+        fill: false,
+        borderColor: "#fdd835",
+      },
+      {
+        label: "安全下限",
+        data: [],
+        fill: false,
+        borderColor: "#fdd835",
+      },
+      {
+        label: "注意上限",
+        data: [],
+        fill: false,
+        borderColor: "#ff9800",
+      },
+      {
+        label: "注意下限",
+        data: [],
+        fill: false,
+        borderColor: "#ff9800",
+      },
+      {
+        label: "物理界線1",
         data: [],
         fill: false,
       },
       {
-        label: "下限",
+        label: "物理界線2",
         data: [],
         fill: false,
       },
@@ -131,7 +146,7 @@ const lineChart = {
 };
 const TempHumData = [];
 const TempHum = getTempHum();
-TempHumData.push(TempHum);
+TempHumData.push(...TempHum);
 
 function updateData() {
   updateChart();
@@ -142,52 +157,67 @@ onMounted(() => {
   updateData();
 });
 onUnmounted(() => {
-  clearInterval(timer)
-})
+  clearInterval(timer);
+});
 
 const timer = setInterval(() => {
+  const TempHumData = [];
   const TempHum = getTempHum();
-  TempHumData.push(TempHum);
+  TempHumData.push(...TempHum);
   updateData();
 }, 5000);
 
 function updateChart() {
   lineChart.data.labels = TempHumData.map((data) => {
-    console.log(data[value1.value][tabOption.value])
-    console.log()
-    return data[value1.value][tabOption.value].time;
+    console.log(data);
+    return data.index_date;
   });
   lineChart.data.datasets[0].data = TempHumData.map((data) => {
-    return data[value1.value][tabOption.value].value;
+    return data.value;
   });
   lineChart.data.datasets[1].data = TempHumData.map((data) => {
-    return data[value1.value][tabOption.value].upperlimit;
+    return data.ai_power_upperbound1;
   });
   lineChart.data.datasets[2].data = TempHumData.map((data) => {
-    return data[value1.value][tabOption.value].lowerlimit;
+    return data.ai_power_lowerbound1;
   });
-  if (tabOption.value === "T") {
+  lineChart.data.datasets[3].data = TempHumData.map((data) => {
+    return data.ai_power_upperbound2;
+  });
+  lineChart.data.datasets[4].data = TempHumData.map((data) => {
+    return data.ai_power_lowerbound2;
+  });
+  const type = TempHumData.map((data) => {
+    return data.type;
+  });
+  if (type[0] == 0) {
     lineChart.data.datasets[0].label = "溫度";
-  } else if (tabOption.value === "H") {
+    lineChart.data.datasets[5].data = Array(3).fill(10);
+    lineChart.data.datasets[6].data = Array(3).fill(38);
+  } else if (type[0] == 1) {
     lineChart.data.datasets[0].label = "濕度";
+    lineChart.data.datasets[6].data = Array(3).fill(30);
+    lineChart.data.datasets[5].data = Array(3).fill(100);
   }
   lineChartRef.value.update(250);
 }
+
 function updateInfo() {
-  if (tabOption.value === "T") {
+  const type = TempHumData.map((data) => {
+    return data.type;
+  });
+  if (type[0] == 0) {
     tab.value = "溫度";
-  } else if (tabOption.value === "C") {
+  } else if (type[0] == 1) {
     tab.value = "濕度";
   }
-  const stateNo =
-    TempHumData[TempHumData.length - 1][value1.value][tabOption.value]
-      .warntype;
+  const stateNo = TempHumData[TempHumData.length - 1].alarm_level;
   switch (stateNo) {
     case 0:
       state.value = "安全";
       break;
     case 1:
-      state.value = "警告";
+      state.value = "注意";
       break;
     case 2:
       state.value = "異常";
@@ -197,22 +227,38 @@ function updateInfo() {
       break;
   }
 
-  stateInfo.value =
-    TempHumData[TempHumData.length - 1][value1.value][
-      tabOption.value
-    ].warninfo;
-  now.value =
-    TempHumData[TempHumData.length - 1][value1.value][
-      tabOption.value
-    ].value;
-  max.value =
-    TempHumData[TempHumData.length - 1][value1.value][
-      tabOption.value
-    ].upperlimit;
-  min.value =
-    TempHumData[TempHumData.length - 1][value1.value][
-      tabOption.value
-    ].lowerlimit;
+  stateInfo.value = TempHumData[TempHumData.length - 1].warninfo;
+  now.value = TempHumData[TempHumData.length - 1].value;
+  upper2.value = TempHumData[TempHumData.length - 1].ai_power_upperbound2;
+  lower2.value = TempHumData[TempHumData.length - 1].ai_power_lowerbound2;
+  upper1.value = TempHumData[TempHumData.length - 1].ai_power_upperbound1;
+  lower1.value = TempHumData[TempHumData.length - 1].ai_power_lowerbound1;
+
+  if (type[0] == 0) {
+    if (now.value > upper2.value) {
+      stateInfo.value = "溫度狀態嚴重高於範圍!!!";
+    } else if (now.value < lower2.value) {
+      stateInfo.value = "溫度狀態嚴重低於範圍!!!";
+    } else if (now.value > upper1.value) {
+      stateInfo.value = "溫度狀態高於動態範圍!";
+    } else if (now.value < lower1.value) {
+      stateInfo.value = "溫度狀態低於動態範圍!";
+    } else {
+      stateInfo.value = "溫度狀態正常";
+    }
+  } else if (type[0] == 1) {
+    if (now.value > upper2.value) {
+      stateInfo.value = "濕度狀態嚴重高於範圍!!!!";
+    } else if (now.value < lower2.value) {
+      stateInfo.value = "濕度狀態嚴重低於範圍!!!";
+    } else if (now.value > upper1.value) {
+      stateInfo.value = "濕度狀態高於動態範圍!";
+    } else if (now.value < lower1.value) {
+      stateInfo.value = "濕度狀態低於動態範圍!";
+    } else {
+      stateInfo.value = "濕度狀態正常";
+    }
+  }
 }
 
 function getGateways() {
@@ -239,48 +285,41 @@ sensors.forEach(function (sensor) {
 });
 value1.value = sensors[0];
 
-function getTempHum(value) {
-  return {
-    1297177: {
-      T: {
-        time: "00:00",
-        value: 30,
-        warntype: 0,
-        warninfo: "xxxx",
-        upperlimit: 40,
-        lowerlimit: 20,
-      },
-      H: {
-        time: "00:00",
-        value: 30,
-        warntype: 0,
-        warninfo: "xxxx",
-        upperlimit: 30,
-        lowerlimit: 12,
-      },
+function getTempHum(sensor) {
+  return [
+    {
+      index_date: "00:00",
+      value: 36,
+      type: 1,
+      alarm_level: 0,
+      ai_power_upperbound1: 80 + Math.random() * 20,
+      ai_power_lowerbound1: Math.random() * 20,
+      ai_power_upperbound2: 80 + Math.random() * 20,
+      ai_power_lowerbound2: Math.random() * 20,
     },
-    1297184: {
-      T: {
-        time: "00:00",
-        value: 30,
-        warntype: 0,
-        warninfo: "xxxx",
-        upperlimit: 40,
-        lowerlimit: 20,
-      },
-      H: {
-        time: "00:00",
-        value: 30,
-        warntype: 0,
-        warninfo: "xxxx",
-        upperlimit: 30,
-        lowerlimit: 12,
-      },
+    {
+      index_date: "00:00",
+      value: 36,
+      typy: 1,
+      alarm_level: 0,
+      ai_power_upperbound1: 80 + Math.random() * 20,
+      ai_power_lowerbound1: Math.random() * 20,
+      ai_power_upperbound2: 80 + Math.random() * 20,
+      ai_power_lowerbound2: Math.random() * 20,
     },
-  };
+    {
+      index_date: "00:00",
+      value: 36,
+      typy: 1,
+      alarm_level: 0,
+      ai_power_upperbound1: 80 + Math.random() * 20,
+      ai_power_lowerbound1: Math.random() * 20,
+      ai_power_upperbound2: 80 + Math.random() * 20,
+      ai_power_lowerbound2: Math.random() * 20,
+    },
+  ];
 }
 </script>
-
 
 <style lang="scss" scoped>
 .chart {
@@ -289,39 +328,24 @@ function getTempHum(value) {
   height: 100% !important;
 }
 
-.tab {
-  text-align: center;
-  :deep .el-radio-button__inner {
-    padding: 10px 20px;
-    color: rgb(136, 136, 136);
-  }
-  :deep .el-radio-button__orig-radio:checked + .el-radio-button__inner {
-    background-color: hsla(180, 1%, 63%, 0.892) !important;
-    border-color: hsla(180, 1%, 63%, 0.892) !important;
-    box-shadow: -1px 0 0 0 hsla(180, 1%, 63%, 0.892) !important;
-    color: #fff;
-  }
-}
-
 .gateway {
   margin: 0 10px;
 }
 .card-header {
   font-size: 20px;
-  margin: 10px 10px 30px 10px;  
+  margin: 10px 10px 30px 10px;
   display: flex;
   justify-content: center;
-  color: rgb(109, 108, 108);
+  color: rgb(87, 87, 87);
 }
 .box-card {
   margin: 92px 20px 10px 20px;
   height: 83%;
 }
-.options {
+
+:deep .options {
   text-align: left;
-}
-.tabs {
-  margin: 28px 10px;
+  margin: 28px 10px !important;
 }
 
 .card-content {
