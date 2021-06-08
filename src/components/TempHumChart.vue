@@ -138,9 +138,9 @@ const lineChart = {
   },
 };
 
-const TempHumData = [];
+let TempHumData = [];
 const TempHum = getTempHum();
-TempHumData.push(...TempHum);
+TempHumData = TempHum;
 
 function updateData() {
   updateChart();
@@ -155,9 +155,8 @@ onUnmounted(() => {
 });
 
 const timer = setInterval(() => {
-  const TempHumData = [];
   const TempHum = getTempHum();
-  TempHumData.push(...TempHum);
+  TempHumData = TempHum;
   updateData();
 }, 5000);
 

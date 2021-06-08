@@ -221,7 +221,7 @@ const timer = setInterval(() => {
   const elec = getElec();
   electronicDatas = elec;
   updateData();
-}, 2000);
+}, 5000);
 
 // Functions
 function updateData() {
