@@ -67,6 +67,8 @@ import { reactive, ref, onMounted, onUnmounted } from "vue";
 import Vue3ChartJs from "@j-t-mcc/vue3-chartjs";
 import zoomPlugin from "chartjs-plugin-zoom";
 Vue3ChartJs.registerGlobalPlugins([zoomPlugin]);
+import axios from "../utils/network";
+import { baseURL } from "../utils/constants";
 
 const options = reactive([]);
 const value = ref("");
@@ -139,6 +141,7 @@ const lineChart = {
 };
 
 let TempHumData = [];
+//Setup
 const TempHum = getTempHum();
 TempHumData = TempHum;
 
@@ -284,6 +287,8 @@ function getTempHum(sensor) {
       index_date: "00:00",
       value: 36,
       type: 1,
+      gateway:4,
+      sensor:1297177,
       alarm_level: 0,
       ai_power_upperbound1: 80 + Math.random() * 20,
       ai_power_lowerbound1: Math.random() * 20,
@@ -294,6 +299,8 @@ function getTempHum(sensor) {
       index_date: "00:00",
       value: 36,
       typy: 1,
+      gateway:4,
+      sensor:1297177,
       alarm_level: 0,
       ai_power_upperbound1: 80 + Math.random() * 20,
       ai_power_lowerbound1: Math.random() * 20,
@@ -304,6 +311,8 @@ function getTempHum(sensor) {
       index_date: "00:00",
       value: 36,
       typy: 1,
+      gateway:4,
+      sensor:1297177,
       alarm_level: 0,
       ai_power_upperbound1: 80 + Math.random() * 20,
       ai_power_lowerbound1: Math.random() * 20,

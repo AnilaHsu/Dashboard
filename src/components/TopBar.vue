@@ -30,9 +30,11 @@
       >
         <div class="notice-title">
           <i :class="test(item.type)" :type="color(item.type)"></i>
-          {{ item.title }}
+          {{ item.tab }}:{{ item.state }}
         </div>
-        <div class="notice-content">{{ item.content }}</div>
+        <div class="notice-content">
+          {{ item.probeNo }}:{{ item.stateInfo }}
+        </div>
       </el-card>
     </el-drawer>
   </div>
@@ -43,10 +45,13 @@ import { ref } from "vue";
 import { useStore } from "vuex";
 const store = useStore();
 const isDrawerOpen = ref(false);
-
+const tab = ref("");
+const state = ref("");
+const probeNo = ref("");
+const stateInfo = ref("");
 function logout() {
   store.commit("logout");
-}
+};
 function drawer() {
   isDrawerOpen.value = true;
 }
@@ -60,27 +65,38 @@ function test(type) {
     return "el-icon-warning";
   }
 }
-function color(type) {
-  if (type == 1) {
-    return "warning";
-  } else if (type == 2) {
-    return "primary";
-  } else if (type == 3) {
-    return "danger";
-  }
-}
 
 const list = [
   { type: "1", title: "注意", content: "內容" },
   { type: "2", title: "異常", content: "內容" },
   { type: "3", title: "緊急", content: "內容" },
 ];
+
+// tab.value = store.getters.tabOption
+// stateNO.value = store.getters.stateNo(tabOption.value);
+// stateInfo.value = store.getters.stateInfo(tabOption.value);
+// probeNo.value = store.getters.probeNo(tabOption.value)
+
+// switch (stateNo) {
+//   case 0:
+//       state.value = "安全";
+//       break;
+//     case 1:
+//       state.value = "注意";
+//       break;
+//     case 2:
+//       state.value = "異常";
+//       break;
+//     case 3:
+//       state.value = "緊急";
+//       break;
+// }
 </script>
 
 <style lang="scss" scoped>
 .title {
   font-size: 22px;
-  font-weight:bolder;
+  font-weight: bolder;
   color: rgb(104, 104, 104);
   text-align: left;
 }

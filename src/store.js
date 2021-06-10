@@ -19,6 +19,24 @@ export const store = createStore({
     }
   },
   getters: {
+    electronicDatas:state =>{
+        return state.electronicDatas
+    },
+    // tabOption: state => {
+    //   const electronicDatas = state.electronicData
+    //   return state.electronicDatas.tabOption
+    // },
+
+    // stateNo: (state) => (tabOption) => {
+    //   const electronicDatas = state.electronicDatas
+    //   return electronicDatas[tabOption].alarm_level
+    // },
+
+    // probeNo:(state) => (tabOption) => {
+    //   const electronicDatas = state.electronicDatas
+    //   return electronicDatas[tabOption].peobe
+    // },
+
     now: (state) => (tabOption) => {
       const electronicDatas = state.electronicDatas
       return electronicDatas[electronicDatas.length - 1][tabOption].value
@@ -39,6 +57,7 @@ export const store = createStore({
       const electronicDatas = state.electronicDatas
       return electronicDatas[electronicDatas.length - 1][tabOption].ai_power_lowerbound2
     },
+
     stateInfo: (state, getters) => (tabOption) => {
       const electronicDatas = state.electronicDatas
       const now = getters.now(tabOption)
@@ -46,6 +65,7 @@ export const store = createStore({
       const lower2 = getters.lower2(tabOption)
       const upper1 = getters.upper1(tabOption)
       const lower1 = getters.lower1(tabOption)
+
       if (tabOption === "V") {
         if (now > upper2) {
           return "電壓狀態嚴重高於限制，可能造成設備損壞";

@@ -82,6 +82,8 @@ import { ref, reactive, onMounted, onUnmounted } from "vue";
 import Vue3ChartJs from "@j-t-mcc/vue3-chartjs";
 import zoomPlugin from "chartjs-plugin-zoom";
 import { useStore } from "vuex";
+import axios from "../utils/network";
+import { baseURL } from "../utils/constants";
 
 Vue3ChartJs.registerGlobalPlugins([zoomPlugin]);
 
@@ -198,30 +200,10 @@ const lineChartP = {
 let electronicDatas = [];
 
 // Setup
-const probes = getProbes();
-probes.forEach(function (probe) {
-  options.push({
-    value: probe,
-    label: probe,
-  });
-});
-value.value = probes[0];
-const elec = getElec();
-electronicDatas = elec;
-
-onMounted(() => {
-  updateData();
+getProbes().then(() => {
+  getElec(value.value);
 });
 
-onUnmounted(() => {
-  clearInterval(timer);
-});
-
-const timer = setInterval(() => {
-  const elec = getElec();
-  electronicDatas = elec;
-  updateData();
-}, 5000);
 
 // Functions
 function updateData() {
@@ -322,99 +304,37 @@ function updateInfo() {
 
 // API
 function getProbes() {
-  return [4, 5, 6];
+  return axios
+    .post("/getProbes")
+    .then((probes) => {
+      probes.forEach((probe) => {
+        options.push({
+          value: probe,
+          label: probe,
+        });
+      });
+      value.value = probes[0];
+      return probes
+    })
+    .catch((error) => {
+      console.log(error);
+    });
 }
 function getElec(probe) {
-  const data = [
-    {
-      V: {
-        index_date: "00:00",
-        value: Math.random() * 100,
-        alarm_level: 0,
-        warninfo: "xxxx",
-        ai_power_upperbound1: 80 + Math.random() * 20,
-        ai_power_lowerbound1: Math.random() * 20,
-        ai_power_upperbound2: 80 + Math.random() * 20,
-        ai_power_lowerbound2: Math.random() * 20,
-      },
-      C: {
-        index_date: "00:00",
-        value: Math.random() * 100,
-        alarm_level: 0,
-        warninfo: "xxxx",
-        ai_power_upperbound1: 80 + Math.random() * 20,
-        ai_power_upperbound2: 80 + Math.random() * 20,
-      },
-      P: {
-        index_date: "00:00",
-        value: Math.random() * 100,
-        alarm_level: 0,
-        warninfo: "xxxx",
-        ai_power_upperbound1: 80 + Math.random() * 20,
-        ai_power_lowerbound1: Math.random() * 20,
-        ai_power_upperbound2: 80 + Math.random() * 20,
-        ai_power_lowerbound2: Math.random() * 20,
-      },
-    },
-    {
-      V: {
-        index_date: "00:00",
-        value: Math.random() * 100,
-        alarm_level: 0,
-        ai_power_upperbound1: 80 + Math.random() * 20,
-        ai_power_lowerbound1: Math.random() * 20,
-        ai_power_upperbound2: 80 + Math.random() * 20,
-        ai_power_lowerbound2: Math.random() * 20,
-      },
-      C: {
-        index_date: "00:00",
-        value: 100,
-        alarm_level: 0,
-        warninfo: "xxxx",
-        ai_power_upperbound1: 80 + Math.random() * 20,
-        ai_power_upperbound2: 80 + Math.random() * 20,
-      },
-      P: {
-        index_date: "00:00",
-        value: Math.random() * 100,
-        alarm_level: 0,
-        warninfo: "xxxx",
-        ai_power_upperbound1: 80 + Math.random() * 20,
-        ai_power_lowerbound1: Math.random() * 20,
-        ai_power_upperbound2: 80 + Math.random() * 20,
-        ai_power_lowerbound2: Math.random() * 20,
-      },
-    },
-    {
-      V: {
-        index_date: "00:00",
-        value: Math.random() * 100,
-        alarm_level: 0,
-        ai_power_upperbound1: 80 + Math.random() * 20,
-        ai_power_lowerbound1: Math.random() * 20,
-        ai_power_upperbound2: 80 + Math.random() * 20,
-        ai_power_lowerbound2: Math.random() * 20,
-      },
-      C: {
-        index_date: "00:00",
-        value: Math.random() * 100,
-        alarm_level: 0,
-        ai_power_upperbound1: 80 + Math.random() * 20,
-        ai_power_upperbound2: 80 + Math.random() * 20,
-      },
-      P: {
-        index_date: "00:00",
-        value: Math.random() * 100,
-        alarm_level: 0,
-        ai_power_upperbound1: 80 + Math.random() * 20,
-        ai_power_lowerbound1: Math.random() * 20,
-        ai_power_upperbound2: 80 + Math.random() * 20,
-        ai_power_lowerbound2: Math.random() * 20,
-      },
-    },
-  ];
-  store.commit("setElecData", data);
-  return data;
+  const eventSource = new EventSource(baseURL + "/electSSE");
+  eventSource.addEventListener("open", (event) => {
+    console.log("electSSE is open");
+  });
+  eventSource.addEventListener("message", (event) => {
+    electronicDatas = JSON.parse(event.data);
+    store.commit("setElecData", electronicDatas);
+    updateData();
+  });
+  eventSource.addEventListener("error", (event) => {
+    if (event.readyState == EventSource.CLOSED) {
+      console.log("electSSE is stop");
+    }
+  });
 }
 </script>
 
