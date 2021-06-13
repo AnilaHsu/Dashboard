@@ -82,7 +82,7 @@ import { ref, reactive, onMounted, onUnmounted } from "vue";
 import Vue3ChartJs from "@j-t-mcc/vue3-chartjs";
 import zoomPlugin from "chartjs-plugin-zoom";
 import { useStore } from "vuex";
-import axios from "../utils/network";
+import axios from "../utils/api";
 import { baseURL } from "../utils/constants";
 
 Vue3ChartJs.registerGlobalPlugins([zoomPlugin]);
@@ -106,6 +106,9 @@ const lineChartRefC = ref(null);
 const lineChartRefP = ref(null);
 const lineChart = {
   type: "line",
+  options: {
+    radius: 0
+  },
   data: {
     labels: ["1", "2", "3", "4"],
     datasets: [
@@ -200,15 +203,17 @@ const lineChartP = {
 let electronicDatas = [];
 
 // Setup
-getProbes().then(() => {
-  getElec(value.value);
-});
-
+getProbes()
+  .then(() => {
+    updateData();
+  })
+  .catch((error) => {
+    console.log(error);
+  });
 
 // Functions
 function updateData() {
-  updateChart();
-  updateInfo();
+  getElec(value.value);
 }
 function updateChart() {
   // update label
@@ -304,31 +309,28 @@ function updateInfo() {
 
 // API
 function getProbes() {
-  return axios
-    .post("/getProbes")
-    .then((probes) => {
-      probes.forEach((probe) => {
-        options.push({
-          value: probe,
-          label: probe,
-        });
+  return axios.post("/getProbes").then((probes) => {
+    probes.forEach((probe) => {
+      options.push({
+        value: probe,
+        label: probe,
       });
-      value.value = probes[0];
-      return probes
-    })
-    .catch((error) => {
-      console.log(error);
     });
+    value.value = probes[0];
+    return probes;
+  });
 }
 function getElec(probe) {
-  const eventSource = new EventSource(baseURL + "/electSSE");
+  const eventSource = new EventSource(baseURL + `/electSSE?probe_no=${probe}`);
   eventSource.addEventListener("open", (event) => {
     console.log("electSSE is open");
   });
   eventSource.addEventListener("message", (event) => {
+    console.log(event.data);
     electronicDatas = JSON.parse(event.data);
     store.commit("setElecData", electronicDatas);
-    updateData();
+    updateChart();
+    updateInfo();
   });
   eventSource.addEventListener("error", (event) => {
     if (event.readyState == EventSource.CLOSED) {

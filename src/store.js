@@ -19,23 +19,11 @@ export const store = createStore({
     }
   },
   getters: {
-    electronicDatas:state =>{
-        return state.electronicDatas
+
+    electronicDatas: (state) => { 
+      const electronicDatas = state.electronicDatas
+      return electronicDatas
     },
-    // tabOption: state => {
-    //   const electronicDatas = state.electronicData
-    //   return state.electronicDatas.tabOption
-    // },
-
-    // stateNo: (state) => (tabOption) => {
-    //   const electronicDatas = state.electronicDatas
-    //   return electronicDatas[tabOption].alarm_level
-    // },
-
-    // probeNo:(state) => (tabOption) => {
-    //   const electronicDatas = state.electronicDatas
-    //   return electronicDatas[tabOption].peobe
-    // },
 
     now: (state) => (tabOption) => {
       const electronicDatas = state.electronicDatas

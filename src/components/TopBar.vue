@@ -17,7 +17,8 @@
           </el-dropdown-menu>
         </template>
       </el-dropdown>
-    </el-col>
+    
+  </el-col>
   </el-row>
 
   <div>
@@ -26,8 +27,7 @@
         class="notice-card"
         shadow="hover"
         v-for="(item, i) in list"
-        :key="i"
-      >
+        :key="i">
         <div class="notice-title">
           <i :class="test(item.type)" :type="color(item.type)"></i>
           {{ item.tab }}:{{ item.state }}
@@ -38,10 +38,11 @@
       </el-card>
     </el-drawer>
   </div>
+
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import { useStore } from "vuex";
 const store = useStore();
 const isDrawerOpen = ref(false);
@@ -71,6 +72,17 @@ const list = [
   { type: "2", title: "異常", content: "內容" },
   { type: "3", title: "緊急", content: "內容" },
 ];
+
+
+const electronicDatas = store.getters.electronicDatas
+
+onMounted(() => {
+  const electAlarm = electronicDatas.filter((electronicDatas) => {
+    return electronicDatas.alarm_level == 1|2|3
+    console.log(electAlarm)
+  })
+})
+
 
 // tab.value = store.getters.tabOption
 // stateNO.value = store.getters.stateNo(tabOption.value);

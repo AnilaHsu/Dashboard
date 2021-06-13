@@ -67,8 +67,8 @@ import { reactive, ref, onMounted, onUnmounted } from "vue";
 import Vue3ChartJs from "@j-t-mcc/vue3-chartjs";
 import zoomPlugin from "chartjs-plugin-zoom";
 Vue3ChartJs.registerGlobalPlugins([zoomPlugin]);
-import axios from "../utils/network";
-import { baseURL } from "../utils/constants";
+import axios from "../utils/api";
+import { getSSE } from "../utils/sse";
 
 const options = reactive([]);
 const value = ref("");
@@ -140,50 +140,48 @@ const lineChart = {
   },
 };
 
-let TempHumData = [];
-//Setup
-const TempHum = getTempHum();
-TempHumData = TempHum;
+let tempHumDatas = [];
+
+getGateways()
+  .then(() => {
+    getSensors(value.value)
+      .then(() => {
+        getTempHum(value.value, value1.value);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  })
+  .catch((error) => {
+    console.log(error);
+  });
 
 function updateData() {
   updateChart();
   updateInfo();
 }
 
-onMounted(() => {
-  updateData();
-});
-onUnmounted(() => {
-  clearInterval(timer);
-});
-
-const timer = setInterval(() => {
-  const TempHum = getTempHum();
-  TempHumData = TempHum;
-  updateData();
-}, 5000);
-
 function updateChart() {
-  lineChart.data.labels = TempHumData.map((data) => {
+  lineChart.data.labels = tempHumDatas.map((data) => {
     console.log(data);
     return data.index_date;
   });
-  lineChart.data.datasets[0].data = TempHumData.map((data) => {
+  lineChart.data.datasets[0].data = tempHumDatas.map((data) => {
     return data.value;
   });
-  lineChart.data.datasets[1].data = TempHumData.map((data) => {
+  lineChart.data.datasets[1].data = tempHumDatas.map((data) => {
     return data.ai_power_upperbound1;
   });
-  lineChart.data.datasets[2].data = TempHumData.map((data) => {
+  lineChart.data.datasets[2].data = tempHumDatas.map((data) => {
     return data.ai_power_lowerbound1;
   });
-  lineChart.data.datasets[3].data = TempHumData.map((data) => {
+  lineChart.data.datasets[3].data = tempHumDatas.map((data) => {
     return data.ai_power_upperbound2;
   });
-  lineChart.data.datasets[4].data = TempHumData.map((data) => {
+  lineChart.data.datasets[4].data = tempHumDatas.map((data) => {
     return data.ai_power_lowerbound2;
   });
-  const type = TempHumData.map((data) => {
+  const type = tempHumDatas.map((data) => {
     return data.type;
   });
   if (type[0] == 0) {
@@ -199,7 +197,7 @@ function updateChart() {
 }
 
 function updateInfo() {
-  const type = TempHumData.map((data) => {
+  const type = tempHumDatas.map((data) => {
     return data.type;
   });
   if (type[0] == 0) {
@@ -207,7 +205,7 @@ function updateInfo() {
   } else if (type[0] == 1) {
     tab.value = "濕度";
   }
-  const stateNo = TempHumData[TempHumData.length - 1].alarm_level;
+  const stateNo = tempHumDatas[tempHumDatas.length - 1].alarm_level;
   switch (stateNo) {
     case 0:
       state.value = "安全";
@@ -223,12 +221,12 @@ function updateInfo() {
       break;
   }
 
-  stateInfo.value = TempHumData[TempHumData.length - 1].warninfo;
-  now.value = TempHumData[TempHumData.length - 1].value;
-  upper2.value = TempHumData[TempHumData.length - 1].ai_power_upperbound2;
-  lower2.value = TempHumData[TempHumData.length - 1].ai_power_lowerbound2;
-  upper1.value = TempHumData[TempHumData.length - 1].ai_power_upperbound1;
-  lower1.value = TempHumData[TempHumData.length - 1].ai_power_lowerbound1;
+  stateInfo.value = tempHumDatas[tempHumDatas.length - 1].warninfo;
+  now.value = tempHumDatas[tempHumDatas.length - 1].value;
+  upper2.value = tempHumDatas[tempHumDatas.length - 1].ai_power_upperbound2;
+  lower2.value = tempHumDatas[tempHumDatas.length - 1].ai_power_lowerbound2;
+  upper1.value = tempHumDatas[tempHumDatas.length - 1].ai_power_upperbound1;
+  lower1.value = tempHumDatas[tempHumDatas.length - 1].ai_power_lowerbound1;
 
   if (type[0] == 0) {
     if (now.value > upper2.value) {
@@ -258,74 +256,46 @@ function updateInfo() {
 }
 
 function getGateways() {
-  return [4, 7, 8, 9, 12, 13, 15, 16, 20, 22, 25];
-}
-const gateways = getGateways();
-gateways.forEach((gateway) => {
-  options.push({
-    value: gateway,
-    label: gateway,
+  return axios.post("/getGateways").then((gateways) => {
+    gateways.forEach((gateway) => {
+      options.push({
+        value: gateway,
+        label: gateway,
+      });
+    });
+    value.value = gateways[0];
   });
-});
-value.value = gateways[0];
-
-function getSensors(value) {
-  return [1297177, 1297184];
 }
-const sensors = getSensors();
-sensors.forEach(function (sensor) {
-  options1.push({
-    value: sensor,
-    label: sensor,
-  });
-});
-value1.value = sensors[0];
 
-function getTempHum(sensor) {
-  return [
-    {
-      index_date: "00:00",
-      value: 36,
-      type: 1,
-      gateway:4,
-      sensor:1297177,
-      alarm_level: 0,
-      ai_power_upperbound1: 80 + Math.random() * 20,
-      ai_power_lowerbound1: Math.random() * 20,
-      ai_power_upperbound2: 80 + Math.random() * 20,
-      ai_power_lowerbound2: Math.random() * 20,
-    },
-    {
-      index_date: "00:00",
-      value: 36,
-      typy: 1,
-      gateway:4,
-      sensor:1297177,
-      alarm_level: 0,
-      ai_power_upperbound1: 80 + Math.random() * 20,
-      ai_power_lowerbound1: Math.random() * 20,
-      ai_power_upperbound2: 80 + Math.random() * 20,
-      ai_power_lowerbound2: Math.random() * 20,
-    },
-    {
-      index_date: "00:00",
-      value: 36,
-      typy: 1,
-      gateway:4,
-      sensor:1297177,
-      alarm_level: 0,
-      ai_power_upperbound1: 80 + Math.random() * 20,
-      ai_power_lowerbound1: Math.random() * 20,
-      ai_power_upperbound2: 80 + Math.random() * 20,
-      ai_power_lowerbound2: Math.random() * 20,
-    },
-  ];
+function getSensors(gateway) {
+  return axios.post(`/getSensors?gateway_no=${gateway}`).then((sensors) => {
+    sensors.forEach(function (sensor) {
+      options1.push({
+        value: sensor,
+        label: sensor,
+      });
+    });
+    value1.value = sensors[0];
+  });
+}
+
+function getTempHum(gateway, sensor) {
+  const sse = getSSE("/thSSE");
+  sse.addEventListener("open", (event) => {
+    console.log("thSSE is open");
+  });
+  sse.addEventListener("message", (event) => {
+    tempHumDatas = event.data;
+  });
+  sse.addEventListener("error", (event) => {
+    if (event.readyState == EventSource.CLOSED) {
+      console.log("thSSE is closed");
+    }
+  });
 }
 </script>
 
 <style lang="scss" scoped>
-
-
 .gateway {
   margin: 0 10px;
 }
@@ -335,15 +305,14 @@ function getTempHum(sensor) {
   display: flex;
   justify-content: center;
   color: rgb(87, 87, 87);
-   font-style: bold;
+  font-style: bold;
 }
 .card-content {
   text-align: left;
   color: rgb(109, 108, 108);
   font-size: 16px;
-  margin: 0px  70px;
+  margin: 0px 70px;
 }
-
 
 .line-chart {
   height: 100%;
@@ -355,13 +324,8 @@ function getTempHum(sensor) {
   margin: 10px;
 }
 
-
-
 :deep .options {
   text-align: left;
   margin: 28px 10px !important;
 }
-
-
-
 </style>
