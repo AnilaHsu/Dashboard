@@ -7,7 +7,7 @@
           v-model="value"
           clearable
           placeholder="請選擇 gateway"
-          @change="getGateways"
+          @change="getSensors"
         >
           <el-option
             v-for="item in options"
@@ -139,26 +139,13 @@ const lineChart = {
     ],
   },
 };
-
 let tempHumDatas = [];
 
 getGateways()
-  .then(() => {
-    getSensors(value.value)
-      .then(() => {
-        getTempHum(value.value, value1.value);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  })
-  .catch((error) => {
-    console.log(error);
-  });
+
 
 function updateData() {
-  updateChart();
-  updateInfo();
+  getTempHum(value1.value)
 }
 
 function updateChart() {
@@ -264,6 +251,10 @@ function getGateways() {
       });
     });
     value.value = gateways[0];
+    getSensors(value.value)
+  })
+  .catch((error) => {
+    console.log(error)
   });
 }
 
@@ -276,16 +267,22 @@ function getSensors(gateway) {
       });
     });
     value1.value = sensors[0];
+    updateData()
+  })
+  .catch((error) => {
+    console.log(error)
   });
 }
 
-function getTempHum(gateway, sensor) {
-  const sse = getSSE("/thSSE");
+function getTempHum(sensor) {
+  const sse = getSSE(`/thSSE?sensor_no=${sensor}`);
   sse.addEventListener("open", (event) => {
     console.log("thSSE is open");
   });
   sse.addEventListener("message", (event) => {
     tempHumDatas = event.data;
+    updateChart();
+    updateInfo();
   });
   sse.addEventListener("error", (event) => {
     if (event.readyState == EventSource.CLOSED) {
@@ -294,6 +291,7 @@ function getTempHum(gateway, sensor) {
   });
 }
 </script>
+
 
 <style lang="scss" scoped>
 .gateway {
