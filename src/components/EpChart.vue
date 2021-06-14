@@ -107,7 +107,16 @@ const lineChartRefP = ref(null);
 const lineChart = {
   type: "line",
   options: {
-    radius: 0
+    radius: 0,
+    scales: {
+      x: {
+        display: true,
+      },
+      y: {
+        display: true,
+        type: 'logarithmic',
+      }
+    }
   },
   data: {
     labels: ["1", "2", "3", "4"],
@@ -160,6 +169,18 @@ const lineChart = {
 };
 const lineChartV = {
   type: "line",
+  options: {
+    radius: 0,
+    scales: {
+      x: {
+        display: true,
+      },
+      y: {
+        display: true,
+        type: 'logarithmic',
+      }
+    }
+  },
   data: {
     labels: [],
     datasets: [
@@ -173,13 +194,24 @@ const lineChartV = {
 };
 const lineChartC = {
   type: "line",
+  options: {
+    radius: 0,
+    scales: {
+      x: {
+        display: true,
+      },
+      y: {
+        display: true,
+        type: 'logarithmic',
+      }
+    }
+  },
   data: {
     labels: [],
     datasets: [
       {
         label: "電流",
         data: [],
-        fill: true,
         borderColor: "#9e9e9e",
         backgroundColor: "rgba(69, 152, 204, 0.48)",
       },
@@ -187,7 +219,19 @@ const lineChartC = {
   },
 };
 const lineChartP = {
-  type: "bar",
+  type: "line",
+  options: {
+    radius: 0,
+    scales: {
+      x: {
+        display: true,
+      },
+      y: {
+        display: true,
+        type: 'logarithmic',
+      }
+    }
+  },
   data: {
     labels: [],
     datasets: [
@@ -269,7 +313,7 @@ function updateLine() {
   }
   if (tab !== "P") {
     lineChart.data.datasets[5].hidden = false;
-    lineChart.data.datasets[5].data = Array(3).fill(10);
+    lineChart.data.datasets[5].data = Array(1440).fill(10);
   } else {
     lineChart.data.datasets[5].hidden = true;
   }
@@ -326,7 +370,6 @@ function getElec(probe) {
     console.log("electSSE is open");
   });
   eventSource.addEventListener("message", (event) => {
-    console.log(event.data);
     electronicDatas = JSON.parse(event.data);
     store.commit("setElecData", electronicDatas);
     updateChart();
