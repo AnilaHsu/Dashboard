@@ -5,10 +5,10 @@
         <SideBar />
       </el-aside>
       <el-container>
-        <el-header>
+        <el-header class="header">
           <TopBar />
         </el-header>
-        <el-main>
+        <el-main class="main">
           <router-view></router-view>
         </el-main>
       </el-container>
@@ -21,15 +21,16 @@ import SideBar from "../components/SideBar.vue";
 import TopBar from "../components/TopBar.vue";
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .el-header {
   background-color: #fff;
   color: #333;
   text-align: center;
-  line-height: 60px;
-  box-shadow: 0 1px 4px rgb(0 21 41 / 8%);
+  line-height: 70px;
+  height: 70px !important;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, .1);
   z-index: 10;
-  padding: 0 30px 0 20px;
+  padding: 0 30px 16px 20px;
 }
 
 .el-aside {
@@ -37,5 +38,13 @@ import TopBar from "../components/TopBar.vue";
   color: #333;
   text-align: center;
   line-height: 200px;
+  box-shadow: 0 3px 6px;
+}
+
+.main {
+  min-height: 100vh;
+}
+.el-card {
+  border-radius: 8px !important;
 }
 </style>

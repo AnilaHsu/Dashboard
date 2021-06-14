@@ -7,7 +7,7 @@
       class="el-menu-vertical-demo"
       @open="handleOpen"
       @close="handleClose"
-      background-color="#545c64"
+      background-color="#37393c"
       text-color="#fff"
       active-text-color="#ffd04b"
     >
@@ -50,5 +50,6 @@ function handleClose(key, keyPath) {
   min-height: 100vh;
   position: fixed;
   width: 200px;
+  border-right: 0px;
 }
 </style>

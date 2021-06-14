@@ -39,23 +39,32 @@
 
   <el-row>
     <el-col :span="16">
-      <el-card class="line-chart" shadow="hover">
+      <el-card class="line-chart" shadow="always">
         <vue3-chart-js ref="lineChartRef" v-bind="{ ...lineChart }" />
       </el-card>
     </el-col>
 
     <el-col :span="8">
-      <el-card class="box-card" shadow="hover">
-        <div class="card-header">
-          <span>濕度資訊</span>
-        </div>
+      <el-card class="box-card" shadow="always">
+        <!-- <div class="card-header">
+          <span>{{ tab }}資訊</span>
+        </div> -->
+
         <div class="card-content">
-          <p>{{ tab }}狀態：{{ state }}</p>
-          <p>狀態內容：</p>
-          <p>{{ stateInfo }}</p>
-          <p>目前{{ tab }}：{{ now }}</p>
-          <p>注意上限：{{ upper2 }}</p>
-          <p>注意下限：{{ lower2 }}</p>
+          <p class="content-label">狀態</p>
+          <p class="content-info">{{ state }}</p>
+          <p class="content-label">狀態內容</p>
+          <p class="content-info">{{ stateInfo }}</p>
+        </div>
+      </el-card>
+      <el-card class="box-card" shadow="always">
+        <div class="card-content">
+          <p class="content-label">當前值</p>
+          <p class="content-info">{{ now }}</p>
+          <p class="content-label">上限（注意）</p>
+          <p class="content-info">{{ upper2 }}</p>
+          <p class="content-label">下限（注意）</p>
+          <p class="content-info">{{ lower2 }}</p>
         </div>
       </el-card>
     </el-col>
@@ -141,11 +150,10 @@ const lineChart = {
 };
 let tempHumDatas = [];
 
-getGateways()
-
+getGateways();
 
 function updateData() {
-  getTempHum(value1.value)
+  getTempHum(value1.value);
 }
 
 function updateChart() {
@@ -209,11 +217,11 @@ function updateInfo() {
   }
 
   stateInfo.value = tempHumDatas[tempHumDatas.length - 1].warninfo;
-  now.value = tempHumDatas[tempHumDatas.length - 1].value;
-  upper2.value = tempHumDatas[tempHumDatas.length - 1].ai_power_upperbound2;
-  lower2.value = tempHumDatas[tempHumDatas.length - 1].ai_power_lowerbound2;
-  upper1.value = tempHumDatas[tempHumDatas.length - 1].ai_power_upperbound1;
-  lower1.value = tempHumDatas[tempHumDatas.length - 1].ai_power_lowerbound1;
+  now.value = tempHumDatas[tempHumDatas.length - 1].value.toFixed(2);
+  upper2.value = tempHumDatas[tempHumDatas.length - 1].ai_power_upperbound2.toFixed(2);
+  lower2.value = tempHumDatas[tempHumDatas.length - 1].ai_power_lowerbound2.toFixed(2);
+  upper1.value = tempHumDatas[tempHumDatas.length - 1].ai_power_upperbound1.toFixed(2);
+  lower1.value = tempHumDatas[tempHumDatas.length - 1].ai_power_lowerbound1.toFixed(2);
 
   if (type[0] == 0) {
     if (now.value > upper2.value) {
@@ -243,35 +251,39 @@ function updateInfo() {
 }
 
 function getGateways() {
-  return axios.post("/getGateways").then((gateways) => {
-    gateways.forEach((gateway) => {
-      options.push({
-        value: gateway,
-        label: gateway,
+  return axios
+    .post("/getGateways")
+    .then((gateways) => {
+      gateways.forEach((gateway) => {
+        options.push({
+          value: gateway,
+          label: gateway,
+        });
       });
+      value.value = gateways[0];
+      getSensors(value.value);
+    })
+    .catch((error) => {
+      console.log(error);
     });
-    value.value = gateways[0];
-    getSensors(value.value)
-  })
-  .catch((error) => {
-    console.log(error)
-  });
 }
 
 function getSensors(gateway) {
-  return axios.post(`/getSensors?gateway_no=${gateway}`).then((sensors) => {
-    sensors.forEach(function (sensor) {
-      options1.push({
-        value: sensor,
-        label: sensor,
+  return axios
+    .post(`/getSensors?gateway_no=${gateway}`)
+    .then((sensors) => {
+      sensors.forEach(function (sensor) {
+        options1.push({
+          value: sensor,
+          label: sensor,
+        });
       });
+      value1.value = sensors[0];
+      updateData();
+    })
+    .catch((error) => {
+      console.log(error);
     });
-    value1.value = sensors[0];
-    updateData()
-  })
-  .catch((error) => {
-    console.log(error)
-  });
 }
 
 function getTempHum(sensor) {
@@ -307,18 +319,33 @@ function getTempHum(sensor) {
 }
 .card-content {
   text-align: left;
-  color: rgb(109, 108, 108);
+  color: rgba(68, 68, 68, 0.858);
   font-size: 16px;
-  margin: 0px 70px;
+  padding: 8px;
+  .content-label {
+    font-size: 14px;
+    font-style: normal;
+    margin: 0 0 4px 0;
+    color: rgba(0, 0, 0, 0.35);
+  }
+  .content-info {
+    font-size: 26px;
+    font-style: bold;
+    color: black;
+    margin: 0 0 16px 0;
+  }
+  .content-info:last-child {
+    margin: 0;
+  }
 }
 
 .line-chart {
-  height: 100%;
   margin: 10px;
+    padding: 16px;
+
 }
 
 .box-card {
-  height: 100%;
   margin: 10px;
 }
 

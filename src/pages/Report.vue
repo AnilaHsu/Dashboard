@@ -26,7 +26,7 @@ const chartOption = ref("電力");
 
 <style lang="scss" socped>
 .el-radio-button__orig-radio:checked + .el-radio-button__inner {
-  background-color: rgba(122, 124, 128, 0.858) !important;
+  background-color: rgba(68, 68, 68, 0.858) !important;
   border-color: rgba(122, 124, 128, 0.858) !important;
   box-shadow: -1px 0 0 0 rgba(96, 100, 107, 0.858) !important;
 }

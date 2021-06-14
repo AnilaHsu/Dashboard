@@ -17,32 +17,29 @@
           </el-dropdown-menu>
         </template>
       </el-dropdown>
-    
-  </el-col>
+    </el-col>
   </el-row>
 
   <div>
-    <el-drawer v-model="isDrawerOpen" :with-header="false">
+    <el-drawer v-model="isDrawerOpen" :with-header="false" @open="updateData">
       <el-card
         class="notice-card"
         shadow="hover"
         v-for="(item, i) in list"
-        :key="i">
+        :key="i"
+      >
         <div class="notice-title">
-          <i :class="test(item.type)" :type="color(item.type)"></i>
-          {{ item.tab }}:{{ item.state }}
+          <i :class="test(item.type)" :type="item.type"></i>
+          {{ item.title }}
         </div>
-        <div class="notice-content">
-          {{ item.probeNo }}:{{ item.stateInfo }}
-        </div>
+        <div class="notice-content">{{ item.probeNo }} : {{ item.content }}</div>
       </el-card>
     </el-drawer>
   </div>
-
 </template>
 
 <script setup>
-import { onMounted, ref } from "vue";
+import { onUpdated, reactive, ref } from "vue";
 import { useStore } from "vuex";
 const store = useStore();
 const isDrawerOpen = ref(false);
@@ -52,13 +49,13 @@ const probeNo = ref("");
 const stateInfo = ref("");
 function logout() {
   store.commit("logout");
-};
+}
 function drawer() {
   isDrawerOpen.value = true;
 }
 
 function test(type) {
-  if (type == 1) {
+  if (type == 1 || type == 0) {
     return "el-icon-question";
   } else if (type == 2) {
     return "el-icon-info";
@@ -67,53 +64,67 @@ function test(type) {
   }
 }
 
-const list = [
-  { type: "1", title: "注意", content: "內容" },
-  { type: "2", title: "異常", content: "內容" },
-  { type: "3", title: "緊急", content: "內容" },
-];
+const list = reactive([]);
 
-
-const electronicDatas = store.getters.electronicDatas
-
-onMounted(() => {
-  const electAlarm = electronicDatas.filter((electronicDatas) => {
-    return electronicDatas.alarm_level == 1|2|3
-    console.log(electAlarm)
-  })
-})
-
+function updateData() {
+  const electAlarms = store.getters.electronicDatas.filter((electAlarm) => {
+    return true
+  }).slice(0, 10)
+  const test = electAlarms.flatMap((electAlarm, index) => {
+    return [
+      {
+        type: electAlarm.V.alarm_level,
+        title: generateAlarmText(electAlarm.V.alarm_level),
+        content: store.getters.stateDescription("V", electAlarm),
+        probeNo: `probe${electAlarm.V.probe}`,
+      },
+      {
+        type: electAlarm.C.alarm_level,
+        title: generateAlarmText(electAlarm.C.alarm_level),
+        content: store.getters.stateDescription("C", electAlarm),
+        probeNo: `probe${electAlarm.C.probe}`,
+      },
+      {
+        type: electAlarm.P.alarm_level,
+        title: generateAlarmText(electAlarm.P.alarm_level),
+        content: store.getters.stateDescription("P", electAlarm),
+        probeNo: `probe${electAlarm.P.probe}`,
+      },
+    ];
+  });
+  list.push(...test);
+}
 
 // tab.value = store.getters.tabOption
 // stateNO.value = store.getters.stateNo(tabOption.value);
 // stateInfo.value = store.getters.stateInfo(tabOption.value);
 // probeNo.value = store.getters.probeNo(tabOption.value)
 
-// switch (stateNo) {
-//   case 0:
-//       state.value = "安全";
-//       break;
-//     case 1:
-//       state.value = "注意";
-//       break;
-//     case 2:
-//       state.value = "異常";
-//       break;
-//     case 3:
-//       state.value = "緊急";
-//       break;
-// }
+function generateAlarmText(stateNo) {
+  switch (stateNo) {
+    case 0:
+    case 1:
+      return "注意";
+      break;
+    case 2:
+      return "異常";
+      break;
+    case 3:
+      return "緊急";
+      break;
+  }
+}
 </script>
 
 <style lang="scss" scoped>
 .title {
-  font-size: 22px;
+  font-size: 28px;
   font-weight: bolder;
-  color: rgb(104, 104, 104);
+  color: rgba(0, 0, 0, .87) ;
   text-align: left;
 }
 .user-b {
-  background-color: rgba(96, 100, 107, 0.858);
+  background-color: rgba(68, 68, 68, 0.795) ;
   margin: 0 0 0 8px;
 
   i {
@@ -128,7 +139,7 @@ onMounted(() => {
   }
 }
 .mes-b {
-  background-color: #f56c6cec;
+  background-color: #f35555da;
 
   :deep i {
     color: #f6f8fb;

@@ -23,7 +23,7 @@
           class="tabs"
           v-model="tabOption"
           style="margin-bottom: 30px"
-          @change="updateData"
+          @change="updateUI"
         >
           <el-radio-button label="V">電壓</el-radio-button>
           <el-radio-button label="C">電流</el-radio-button>
@@ -34,25 +34,34 @@
   </el-row>
   <el-row>
     <el-col :span="16">
-      <el-card class="line_chart" shadow="hover">
+      <el-card class="line_chart" shadow="always">
         <vue3-chart-js ref="lineChartRef" v-bind="{ ...lineChart }" />
       </el-card>
     </el-col>
 
     <el-col :span="8">
-      <el-card class="box-card" shadow="hover">
-        <div class="card-header">
+      <el-card class="box-card" shadow="always">
+        <!-- <div class="card-header">
           <span>{{ tab }}資訊</span>
-        </div>
+        </div> -->
 
         <div class="card-content">
-          <p>{{ tab }}狀態：{{ state }}</p>
-          <p>狀態內容：</p>
-          <p>{{ stateInfo }}</p>
-          <p>目前{{ tab }}：{{ now }}</p>
-          <p>注意上限：{{ upper2 }}</p>
-
-          <p v-if="tabOption !== 'C'">注意下限：{{ lower2 }}</p>
+          <p class="content-label">狀態</p>
+          <p class="content-info">{{ state }}</p>
+          <p class="content-label">狀態內容</p>
+          <p class="content-info">{{ stateInfo }}</p>
+        </div>
+      </el-card>
+      <el-card class="box-card" shadow="always">
+        <div class="card-content">
+          <p class="content-label">當前值</p>
+          <p class="content-info">{{ now }}</p>
+          <p class="content-label">上限（注意）</p>
+          <p class="content-info">{{ upper2 }}</p>
+          <div v-if="tabOption !== 'C'">
+            <p class="content-label">下限（注意）</p>
+            <p class="content-info">{{ lower2 }}</p>
+          </div>
         </div>
       </el-card>
     </el-col>
@@ -108,15 +117,6 @@ const lineChart = {
   type: "line",
   options: {
     radius: 0,
-    scales: {
-      x: {
-        display: true,
-      },
-      y: {
-        display: true,
-        type: 'logarithmic',
-      }
-    }
   },
   data: {
     labels: ["1", "2", "3", "4"],
@@ -157,13 +157,6 @@ const lineChart = {
         hidden: false,
         borderDash: [6, 5],
       },
-      {
-        label: "物理界線",
-        data: "",
-        hidden: false,
-        borderColor: "#ff867c",
-        borderDash: [11, 5],
-      },
     ],
   },
 };
@@ -171,15 +164,6 @@ const lineChartV = {
   type: "line",
   options: {
     radius: 0,
-    scales: {
-      x: {
-        display: true,
-      },
-      y: {
-        display: true,
-        type: 'logarithmic',
-      }
-    }
   },
   data: {
     labels: [],
@@ -196,15 +180,6 @@ const lineChartC = {
   type: "line",
   options: {
     radius: 0,
-    scales: {
-      x: {
-        display: true,
-      },
-      y: {
-        display: true,
-        type: 'logarithmic',
-      }
-    }
   },
   data: {
     labels: [],
@@ -222,15 +197,6 @@ const lineChartP = {
   type: "line",
   options: {
     radius: 0,
-    scales: {
-      x: {
-        display: true,
-      },
-      y: {
-        display: true,
-        type: 'logarithmic',
-      }
-    }
   },
   data: {
     labels: [],
@@ -258,6 +224,10 @@ getProbes()
 // Functions
 function updateData() {
   getElec(value.value);
+}
+function updateUI() {
+  updateChart();
+  updateInfo();
 }
 function updateChart() {
   // update label
@@ -311,12 +281,12 @@ function updateLine() {
   } else {
     lineChart.data.datasets[4].hidden = true;
   }
-  if (tab !== "P") {
-    lineChart.data.datasets[5].hidden = false;
-    lineChart.data.datasets[5].data = Array(1440).fill(10);
-  } else {
-    lineChart.data.datasets[5].hidden = true;
-  }
+  // if (tab !== "P") {
+  //   lineChart.data.datasets[5].hidden = false;
+  //   lineChart.data.datasets[5].data = Array(1440).fill(10);
+  // } else {
+  //   lineChart.data.datasets[5].hidden = true;
+  // }
 }
 
 function updateInfo() {
@@ -343,12 +313,22 @@ function updateInfo() {
       state.value = "緊急";
       break;
   }
-  now.value = store.getters.now(tabOption.value);
-  upper2.value = store.getters.upper2(tabOption.value);
-  lower2.value = store.getters.lower2(tabOption.value);
-  upper1.value = store.getters.upper1(tabOption.value);
-  lower1.value = store.getters.lower1(tabOption.value);
-  stateInfo.value = store.getters.stateInfo(tabOption.value);
+  now.value = store.getters
+    .now(tabOption.value, electronicDatas.length - 1)
+    .toFixed(2);
+  upper2.value = store.getters
+    .upper2(tabOption.value, electronicDatas.length - 1)
+    .toFixed(2);
+  lower2.value = store.getters
+    .lower2(tabOption.value, electronicDatas.length - 1)
+    .toFixed(2);
+  upper1.value = store.getters
+    .upper1(tabOption.value, electronicDatas.length - 1)
+    .toFixed(2);
+  lower1.value = store.getters
+    .lower1(tabOption.value, electronicDatas.length - 1)
+    .toFixed(2);
+  stateInfo.value = store.getters.lastStateInfo(tabOption.value);
 }
 
 // API
@@ -370,10 +350,11 @@ function getElec(probe) {
     console.log("electSSE is open");
   });
   eventSource.addEventListener("message", (event) => {
-    electronicDatas = JSON.parse(event.data);
+    electronicDatas = JSON.parse(event.data).filter((data) => {
+      return data.P.ai_power_upperbound2 !== 0;
+    });
     store.commit("setElecData", electronicDatas);
-    updateChart();
-    updateInfo();
+    updateUI();
   });
   eventSource.addEventListener("error", (event) => {
     if (event.readyState == EventSource.CLOSED) {
@@ -391,7 +372,7 @@ function getElec(probe) {
     color: rgb(120, 120, 120);
   }
   :deep .el-radio-button__orig-radio:checked + .el-radio-button__inner {
-    background-color: hsla(180, 1%, 63%, 0.892) !important;
+    background-color: rgba(68, 68, 68, 0.858) !important;
     border-color: hsla(180, 1%, 63%, 0.892) !important;
     box-shadow: -1px 0 0 0 hsla(180, 1%, 63%, 0.892) !important;
     color: #fff;
@@ -407,28 +388,34 @@ function getElec(probe) {
 .probe {
   margin: 0px 10px;
 }
-.card-header {
-  font-size: 20px;
-  margin: 10px 10px 40px 10px;
-  display: flex;
-  justify-content: center;
-  color: rgb(87, 87, 87);
-  font-style: bold;
-}
 .card-content {
   text-align: left;
-  color: rgb(109, 108, 108);
+  color: rgba(68, 68, 68, 0.858);
   font-size: 16px;
-  margin: 0px 70px;
+  padding: 8px;
+  .content-label {
+    font-size: 14px;
+    font-style: normal;
+    margin: 0 0 4px 0;
+    color: rgba(0, 0, 0, 0.35);
+  }
+  .content-info {
+    font-size: 26px;
+    font-style: bold;
+    color: black;
+    margin: 0 0 16px 0;
+  }
+  .content-info:last-child {
+    margin: 0;
+  }
 }
 
 .box-card {
-  height: 100%;
   margin: 10px;
 }
 .line_chart {
-  height: 100%;
   margin: 10px;
+  padding: 16px;
 }
 
 .line_chart_per {
