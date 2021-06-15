@@ -43,6 +43,7 @@
 <script setup>
 import { ref, reactive } from "vue";
 import { useStore } from "vuex";
+import axios from 'axios';
 
 const store = useStore();
 
@@ -75,9 +76,16 @@ const rules = {
 
 function submitForm() {
   form.value.validate((valid) => {
-    console.log(valid);
     if (valid) {
-      store.commit("login", "123456");
+      axios
+        .post("https://api.wasay.cc/login", {
+          username: ruleForm.account,
+          password: ruleForm.password,
+        })
+        .then((res) => {
+          const token = res.data["access_token"];
+          store.commit("login", token);
+        });
     } else {
       console.log("error submit!!");
       return false;
@@ -100,7 +108,7 @@ function resetForm() {
 .box-card {
   width: 380px;
   border-radius: 10px;
-  margin: 0 0 80px 0 ;
+  margin: 0 0 80px 0;
 }
 
 h1 {
@@ -119,21 +127,19 @@ h1 {
   &:focus,
   &:hover {
     color: #f6f8fb;
-    border-color:rgb(111, 111, 111) ;
+    border-color: rgb(111, 111, 111);
     background-color: rgb(111, 111, 111);
-    }
+  }
 }
 
-.btn-reset{
+.btn-reset {
   border-radius: 8px;
 
   &:focus,
   &:hover {
     color: rgb(111, 111, 111);
     background-color: #f6f8fb;
-    border-color:rgb(191, 191, 191) ;
-
-   
-    }
+    border-color: rgb(191, 191, 191);
+  }
 }
 </style>

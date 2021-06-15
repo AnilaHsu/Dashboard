@@ -221,6 +221,13 @@ getProbes()
     console.log(error);
   });
 
+onUnmounted(() => {
+  if (
+    eventSource !== undefined &&
+    eventSource.readyState !== EventSource.CLOSED
+  )
+    eventSource.close();
+});
 // Functions
 function updateData() {
   getElec(value.value);
@@ -319,21 +326,23 @@ function updateInfo() {
   upper2.value = store.getters
     .upper2(tabOption.value, electronicDatas.length - 1)
     .toFixed(2);
-  lower2.value = store.getters
-    .lower2(tabOption.value, electronicDatas.length - 1)
-    .toFixed(2);
   upper1.value = store.getters
     .upper1(tabOption.value, electronicDatas.length - 1)
     .toFixed(2);
-  lower1.value = store.getters
-    .lower1(tabOption.value, electronicDatas.length - 1)
-    .toFixed(2);
+  if (tabOption.value !== "C") {
+    lower2.value = store.getters
+      .lower2(tabOption.value, electronicDatas.length - 1)
+      .toFixed(2);
+    lower1.value = store.getters
+      .lower1(tabOption.value, electronicDatas.length - 1)
+      .toFixed(2);
+  }
   stateInfo.value = store.getters.lastStateInfo(tabOption.value);
 }
 
 // API
 function getProbes() {
-  return axios.post("/getProbes").then((probes) => {
+  return axios.get("/getProbes").then((probes) => {
     probes.forEach((probe) => {
       options.push({
         value: probe,
@@ -344,8 +353,14 @@ function getProbes() {
     return probes;
   });
 }
+let eventSource;
 function getElec(probe) {
-  const eventSource = new EventSource(baseURL + `/electSSE?probe_no=${probe}`);
+  if (
+    eventSource !== undefined &&
+    eventSource.readyState !== EventSource.CLOSED
+  )
+    eventSource.close();
+  eventSource = new EventSource(baseURL + `/electSSE?probe_no=${probe}`);
   eventSource.addEventListener("open", (event) => {
     console.log("electSSE is open");
   });
@@ -400,10 +415,10 @@ function getElec(probe) {
     color: rgba(0, 0, 0, 0.35);
   }
   .content-info {
-    font-size: 26px;
+    font-size: 22px;
     font-style: bold;
     color: black;
-    margin: 0 0 16px 0;
+    margin: 0 0 12px 0;
   }
   .content-info:last-child {
     margin: 0;

@@ -3,7 +3,7 @@ import { createStore } from 'vuex'
 export const store = createStore({
   state() {
     return {
-      token: 'null',
+      token: null,
       electronicDatas: []
     }
   },
@@ -94,7 +94,6 @@ export const store = createStore({
       const lower2 = getters.lower2(tabOption, lastIndex)
       const upper1 = getters.upper1(tabOption, lastIndex)
       const lower1 = getters.lower1(tabOption, lastIndex)
-
       if (tabOption === "V") {
         if (now > upper2) {
           return "電壓狀態嚴重高於限制，可能造成設備損壞";

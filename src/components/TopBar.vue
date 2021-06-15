@@ -22,18 +22,26 @@
 
   <div>
     <el-drawer v-model="isDrawerOpen" :with-header="false" @open="updateData">
-      <el-card
-        class="notice-card"
-        shadow="hover"
-        v-for="(item, i) in list"
-        :key="i"
-      >
-        <div class="notice-title">
-          <i :class="test(item.type)" :type="item.type"></i>
-          {{ item.title }}
-        </div>
-        <div class="notice-content">{{ item.probeNo }} : {{ item.content }}</div>
-      </el-card>
+      <div v-if="list.length > 0">
+        <el-card
+          class="notice-card"
+          shadow="hover"
+          v-for="(item, i) in list"
+          :key="i"
+        >
+          <div class="notice-title">
+            <i :class="test(item.type)" :type="item.type"></i>
+            {{ item.title }}
+          </div>
+          <div class="notice-content">
+            {{ item.probeNo }} : {{ item.content }}
+          </div>
+        </el-card>
+      </div>
+      <div v-else>
+        <i class="el-icon-circle-check ok-icon"></i>
+        <p class="ok-text">一切正常</p>
+      </div>
     </el-drawer>
   </div>
 </template>
@@ -47,15 +55,17 @@ const tab = ref("");
 const state = ref("");
 const probeNo = ref("");
 const stateInfo = ref("");
+
 function logout() {
   store.commit("logout");
 }
+
 function drawer() {
   isDrawerOpen.value = true;
 }
 
 function test(type) {
-  if (type == 1 || type == 0) {
+  if (type == 1) {
     return "el-icon-question";
   } else if (type == 2) {
     return "el-icon-info";
@@ -68,8 +78,12 @@ const list = reactive([]);
 
 function updateData() {
   const electAlarms = store.getters.electronicDatas.filter((electAlarm) => {
-    return true
-  }).slice(0, 10)
+    return (
+      electAlarm.V.alarm_level !== 0 ||
+      electAlarm.C.alarm_level !== 0 ||
+      electAlarm.P.alarm_level !== 0
+    );
+  });
   const test = electAlarms.flatMap((electAlarm, index) => {
     return [
       {
@@ -102,7 +116,6 @@ function updateData() {
 
 function generateAlarmText(stateNo) {
   switch (stateNo) {
-    case 0:
     case 1:
       return "注意";
       break;
@@ -120,11 +133,11 @@ function generateAlarmText(stateNo) {
 .title {
   font-size: 28px;
   font-weight: bolder;
-  color: rgba(0, 0, 0, .87) ;
+  color: rgba(0, 0, 0, 0.87);
   text-align: left;
 }
 .user-b {
-  background-color: rgba(68, 68, 68, 0.795) ;
+  background-color: rgba(68, 68, 68, 0.795);
   margin: 0 0 0 8px;
 
   i {
@@ -176,5 +189,15 @@ function generateAlarmText(stateNo) {
 }
 :deep .el-drawer {
   padding: 30px 0;
+}
+.ok-icon {
+  font-size: 48px;
+  color: green;
+  margin-top: 64px;
+}
+.ok-text {
+  line-height: normal;
+  margin: 0;
+  font-size: 24px;
 }
 </style>

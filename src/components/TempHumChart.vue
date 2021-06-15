@@ -131,20 +131,20 @@ const lineChart = {
         borderColor: "#ffb74d",
         borderDash: [6, 5],
       },
-      {
-        label: "物理界線1",
-        data: [],
-        fill: false,
-        borderColor: "#ff867c",
-        borderDash: [11, 5],
-      },
-      {
-        label: "物理界線2",
-        data: [],
-        fill: false,
-        borderColor: "#ff867c",
-        borderDash: [11, 5],
-      },
+      // {
+      //   label: "物理界線1",
+      //   data: [],
+      //   fill: false,
+      //   borderColor: "#ff867c",
+      //   borderDash: [11, 5],
+      // },
+      // {
+      //   label: "物理界線2",
+      //   data: [],
+      //   fill: false,
+      //   borderColor: "#ff867c",
+      //   borderDash: [11, 5],
+      // },
     ],
   },
 };
@@ -152,13 +152,15 @@ let tempHumDatas = [];
 
 getGateways();
 
+onUnmounted(() => {
+  if (sse !== undefined && sse.readyState !== EventSource.CLOSED) sse.close();
+});
 function updateData() {
   getTempHum(value1.value);
 }
 
 function updateChart() {
   lineChart.data.labels = tempHumDatas.map((data) => {
-    console.log(data);
     return data.index_date;
   });
   lineChart.data.datasets[0].data = tempHumDatas.map((data) => {
@@ -176,18 +178,18 @@ function updateChart() {
   lineChart.data.datasets[4].data = tempHumDatas.map((data) => {
     return data.ai_power_lowerbound2;
   });
-  const type = tempHumDatas.map((data) => {
-    return data.type;
-  });
-  if (type[0] == 0) {
-    lineChart.data.datasets[0].label = "溫度";
-    lineChart.data.datasets[5].data = Array(3).fill(10);
-    lineChart.data.datasets[6].data = Array(3).fill(38);
-  } else if (type[0] == 1) {
-    lineChart.data.datasets[0].label = "濕度";
-    lineChart.data.datasets[6].data = Array(3).fill(30);
-    lineChart.data.datasets[5].data = Array(3).fill(100);
-  }
+  // const type = tempHumDatas.map((data) => {
+  //   return data.type;
+  // });
+  // if (type[0] == 0) {
+  //   lineChart.data.datasets[0].label = "溫度";
+  //   lineChart.data.datasets[5].data = Array(3).fill(10);
+  //   lineChart.data.datasets[6].data = Array(3).fill(38);
+  // } else if (type[0] == 1) {
+  //   lineChart.data.datasets[0].label = "濕度";
+  //   lineChart.data.datasets[6].data = Array(3).fill(30);
+  //   lineChart.data.datasets[5].data = Array(3).fill(100);
+  // }
   lineChartRef.value.update(250);
 }
 
@@ -195,11 +197,6 @@ function updateInfo() {
   const type = tempHumDatas.map((data) => {
     return data.type;
   });
-  if (type[0] == 0) {
-    tab.value = "溫度";
-  } else if (type[0] == 1) {
-    tab.value = "濕度";
-  }
   const stateNo = tempHumDatas[tempHumDatas.length - 1].alarm_level;
   switch (stateNo) {
     case 0:
@@ -218,12 +215,16 @@ function updateInfo() {
 
   stateInfo.value = tempHumDatas[tempHumDatas.length - 1].warninfo;
   now.value = tempHumDatas[tempHumDatas.length - 1].value.toFixed(2);
-  upper2.value = tempHumDatas[tempHumDatas.length - 1].ai_power_upperbound2.toFixed(2);
-  lower2.value = tempHumDatas[tempHumDatas.length - 1].ai_power_lowerbound2.toFixed(2);
-  upper1.value = tempHumDatas[tempHumDatas.length - 1].ai_power_upperbound1.toFixed(2);
-  lower1.value = tempHumDatas[tempHumDatas.length - 1].ai_power_lowerbound1.toFixed(2);
+  upper2.value =
+    tempHumDatas[tempHumDatas.length - 1].ai_power_upperbound2.toFixed(2);
+  lower2.value =
+    tempHumDatas[tempHumDatas.length - 1].ai_power_lowerbound2.toFixed(2);
+  upper1.value =
+    tempHumDatas[tempHumDatas.length - 1].ai_power_upperbound1.toFixed(2);
+  lower1.value =
+    tempHumDatas[tempHumDatas.length - 1].ai_power_lowerbound1.toFixed(2);
 
-  if (type[0] == 0) {
+  if (type[tempHumDatas.length - 1] == 65538) {
     if (now.value > upper2.value) {
       stateInfo.value = "溫度狀態嚴重高於範圍!!!";
     } else if (now.value < lower2.value) {
@@ -235,7 +236,7 @@ function updateInfo() {
     } else {
       stateInfo.value = "溫度狀態正常";
     }
-  } else if (type[0] == 1) {
+  } else if (type[tempHumDatas.length - 1] == 65537) {
     if (now.value > upper2.value) {
       stateInfo.value = "濕度狀態嚴重高於範圍!!!!";
     } else if (now.value < lower2.value) {
@@ -252,7 +253,7 @@ function updateInfo() {
 
 function getGateways() {
   return axios
-    .post("/getGateways")
+    .get("/getGateways")
     .then((gateways) => {
       gateways.forEach((gateway) => {
         options.push({
@@ -270,7 +271,7 @@ function getGateways() {
 
 function getSensors(gateway) {
   return axios
-    .post(`/getSensors?gateway_no=${gateway}`)
+    .get(`/getSensors?gateway_no=${gateway}`)
     .then((sensors) => {
       sensors.forEach(function (sensor) {
         options1.push({
@@ -285,20 +286,24 @@ function getSensors(gateway) {
       console.log(error);
     });
 }
-
+let sse;
 function getTempHum(sensor) {
-  const sse = getSSE(`/thSSE?sensor_no=${sensor}`);
+  if (sse !== undefined && sse.readyState !== EventSource.CLOSED) sse.close();
+  sse = getSSE(`/thSSE?sensor_no=${sensor}`);
   sse.addEventListener("open", (event) => {
     console.log("thSSE is open");
   });
   sse.addEventListener("message", (event) => {
-    tempHumDatas = event.data;
+    tempHumDatas = JSON.parse(event.data).filter((data) => {
+      return data.ai_power_upperbound2 !== 0;
+    });
+    console.log(tempHumDatas);
     updateChart();
     updateInfo();
   });
   sse.addEventListener("error", (event) => {
     if (event.readyState == EventSource.CLOSED) {
-      console.log("thSSE is closed");
+      console.log("thSSE is EventSource.CLOSED");
     }
   });
 }
@@ -329,10 +334,10 @@ function getTempHum(sensor) {
     color: rgba(0, 0, 0, 0.35);
   }
   .content-info {
-    font-size: 26px;
+    font-size: 24px;
     font-style: bold;
     color: black;
-    margin: 0 0 16px 0;
+    margin: 0 0 12px 0;
   }
   .content-info:last-child {
     margin: 0;
@@ -341,8 +346,7 @@ function getTempHum(sensor) {
 
 .line-chart {
   margin: 10px;
-    padding: 16px;
-
+  padding: 16px;
 }
 
 .box-card {
