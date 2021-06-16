@@ -1,7 +1,8 @@
 <template>
   <el-row>
     <div class="options">
-      <span class="data_option">
+      <div class="option-container">
+        <p class="choose">gateway</p>
         <el-select
           class="gateway"
           v-model="value"
@@ -17,8 +18,9 @@
           >
           </el-option>
         </el-select>
-      </span>
-      <span>
+      </div>
+      <div class="option-container">
+        <p class="choose">sensor</p>
         <el-select
           v-model="value1"
           clearable
@@ -33,8 +35,9 @@
           >
           </el-option>
         </el-select>
-      </span>
+      </div>
     </div>
+    <date-card :date="date" class="date-card"/>
   </el-row>
 
   <el-row>
@@ -78,6 +81,7 @@ import zoomPlugin from "chartjs-plugin-zoom";
 Vue3ChartJs.registerGlobalPlugins([zoomPlugin]);
 import axios from "../utils/api";
 import { getSSE } from "../utils/sse";
+import DateCard from "./DateCard.vue";
 
 const options = reactive([]);
 const value = ref("");
@@ -91,9 +95,28 @@ const upper1 = ref("");
 const lower1 = ref("");
 const upper2 = ref("");
 const lower2 = ref("");
+const date = ref("")
 const lineChartRef = ref(null);
 const lineChart = {
   type: "line",
+  options: {
+    scales: {
+      x: {
+        display: true,
+        title: {
+          display: true,
+          text: "時間",
+        },
+      },
+      y: {
+        display: true,
+        title: {
+          display: true,
+          text: "",
+        },
+      },
+    },
+  },
   data: {
     labels: [],
     datasets: [
@@ -104,28 +127,28 @@ const lineChart = {
         borderColor: "#707070",
       },
       {
-        label: "安全上限",
+        label: "安全範圍",
         data: [],
         fill: false,
         borderColor: "#689f38",
         borderDash: [3, 5],
       },
       {
-        label: "安全下限",
+        label: "安全範圍",
         data: [],
         fill: false,
         borderColor: "#689f38",
         borderDash: [3, 5],
       },
       {
-        label: "注意上限",
+        label: "警戒範圍",
         data: [],
         fill: false,
         borderColor: "#ffb74d",
         borderDash: [6, 5],
       },
       {
-        label: "注意下限",
+        label: "警戒範圍",
         data: [],
         fill: false,
         borderColor: "#ffb74d",
@@ -149,6 +172,9 @@ const lineChart = {
   },
 };
 let tempHumDatas = [];
+
+const TEMP_TYPE_ID = 65538;
+const HUM_TYPE_ID = 65537;
 
 getGateways();
 
@@ -178,6 +204,13 @@ function updateChart() {
   lineChart.data.datasets[4].data = tempHumDatas.map((data) => {
     return data.ai_power_lowerbound2;
   });
+  if (tempHumDatas[0].type === TEMP_TYPE_ID) {
+    lineChart.data.datasets[0].label = "溫度";
+    lineChart.options.scales.y.title.text = "溫度（C）";
+  } else if (tempHumDatas[0].type === HUM_TYPE_ID) {
+    lineChart.data.datasets[0].label = "濕度";
+    lineChart.options.scales.y.title.text = "濕度（%）";
+  }
   // const type = tempHumDatas.map((data) => {
   //   return data.type;
   // });
@@ -194,6 +227,7 @@ function updateChart() {
 }
 
 function updateInfo() {
+  date.value = tempHumDatas[tempHumDatas.length - 1].date
   const type = tempHumDatas.map((data) => {
     return data.type;
   });
@@ -224,26 +258,26 @@ function updateInfo() {
   lower1.value =
     tempHumDatas[tempHumDatas.length - 1].ai_power_lowerbound1.toFixed(2);
 
-  if (type[tempHumDatas.length - 1] == 65538) {
-    if (now.value > upper2.value) {
+  if (type[tempHumDatas.length - 1] == TEMP_TYPE_ID) {
+    if (parseFloat(now.value) > upper2.value) {
       stateInfo.value = "溫度狀態嚴重高於範圍!!!";
-    } else if (now.value < lower2.value) {
+    } else if (parseFloat(now.value) < lower2.value) {
       stateInfo.value = "溫度狀態嚴重低於範圍!!!";
-    } else if (now.value > upper1.value) {
+    } else if (parseFloat(now.value) > upper1.value) {
       stateInfo.value = "溫度狀態高於動態範圍!";
-    } else if (now.value < lower1.value) {
+    } else if (parseFloat(now.value) < lower1.value) {
       stateInfo.value = "溫度狀態低於動態範圍!";
     } else {
       stateInfo.value = "溫度狀態正常";
     }
-  } else if (type[tempHumDatas.length - 1] == 65537) {
-    if (now.value > upper2.value) {
+  } else if (type[tempHumDatas.length - 1] == HUM_TYPE_ID) {
+    if (parseFloat(now.value) > upper2.value) {
       stateInfo.value = "濕度狀態嚴重高於範圍!!!!";
-    } else if (now.value < lower2.value) {
+    } else if (parseFloat(now.value) < lower2.value) {
       stateInfo.value = "濕度狀態嚴重低於範圍!!!";
-    } else if (now.value > upper1.value) {
+    } else if (parseFloat(now.value) > upper1.value) {
       stateInfo.value = "濕度狀態高於動態範圍!";
-    } else if (now.value < lower1.value) {
+    } else if (parseFloat(now.value) < lower1.value) {
       stateInfo.value = "濕度狀態低於動態範圍!";
     } else {
       stateInfo.value = "濕度狀態正常";
@@ -311,9 +345,6 @@ function getTempHum(sensor) {
 
 
 <style lang="scss" scoped>
-.gateway {
-  margin: 0 10px;
-}
 .card-header {
   font-size: 20px;
   margin: 10px 10px 40px 10px;
@@ -353,8 +384,27 @@ function getTempHum(sensor) {
   margin: 10px;
 }
 
-:deep .options {
+.options {
   text-align: left;
-  margin: 28px 10px !important;
+  margin: 18px auto 18px 10px !important;
+}
+.choose {
+  color: rgba(65, 65, 65, 0.87);
+  font-weight: bold;
+  margin: 0 4px 6px 6px;
+  font-size: 16px;
+}
+.option-container {
+  display: inline-block;
+
+  &:last-child {
+    margin-left: 16px;
+  }
+}
+:deep .el-input__inner {
+  width: 120px;
+}
+.date-card {
+  align-self: center;
 }
 </style>

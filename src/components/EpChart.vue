@@ -1,36 +1,31 @@
 <template>
   <el-row>
     <div class="options">
-      <span>
-        <el-select
-          class="probe"
-          v-model="value"
-          clearable
-          placeholder="請選擇 probe"
-          @change="updateData"
+      <span class="choose"> probe</span>
+      <el-select
+        class="probe"
+        v-model="value"
+        clearable
+        placeholder="請選擇 probe"
+        @change="updateData"
+      >
+        <el-option
+          v-for="item in options"
+          :key="item.value"
+          :label="item.label"
+          :value="item.value"
         >
-          <el-option
-            v-for="item in options"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
-          >
-          </el-option>
-        </el-select>
-      </span>
+        </el-option>
+      </el-select>
       <span class="tab" style="margin-top: 20px">
-        <el-radio-group
-          class="tabs"
-          v-model="tabOption"
-          style="margin-bottom: 30px"
-          @change="updateUI"
-        >
+        <el-radio-group class="tabs" v-model="tabOption" @change="updateUI">
           <el-radio-button label="V">電壓</el-radio-button>
           <el-radio-button label="C">電流</el-radio-button>
           <el-radio-button label="P">功耗</el-radio-button>
         </el-radio-group>
       </span>
     </div>
+    <date-card :date="date" />
   </el-row>
   <el-row>
     <el-col :span="16">
@@ -93,6 +88,7 @@ import zoomPlugin from "chartjs-plugin-zoom";
 import { useStore } from "vuex";
 import axios from "../utils/api";
 import { baseURL } from "../utils/constants";
+import DateCard from "./DateCard.vue"
 
 Vue3ChartJs.registerGlobalPlugins([zoomPlugin]);
 
@@ -109,6 +105,7 @@ const upper1 = ref("");
 const lower1 = ref("");
 const upper2 = ref("");
 const lower2 = ref("");
+const date = ref("");
 const lineChartRef = ref(null);
 const lineChartRefV = ref(null);
 const lineChartRefC = ref(null);
@@ -117,6 +114,22 @@ const lineChart = {
   type: "line",
   options: {
     radius: 0,
+    scales: {
+      x: {
+        display: true,
+        title: {
+          display: true,
+          text: "時間",
+        },
+      },
+      y: {
+        display: true,
+        title: {
+          display: true,
+          text: "電壓值 (V)",
+        },
+      },
+    },
   },
   data: {
     labels: ["1", "2", "3", "4"],
@@ -128,14 +141,14 @@ const lineChart = {
         borderColor: "#707070",
       },
       {
-        label: "安全上限",
+        label: "安全範圍",
         data: [],
         fill: false,
         borderColor: "#689f38",
         borderDash: [3, 5],
       },
       {
-        label: "安全下限",
+        label: "安全範圍",
         data: [],
         fill: false,
         borderColor: "#689f38",
@@ -143,14 +156,14 @@ const lineChart = {
         borderDash: [3, 5],
       },
       {
-        label: "注意上限",
+        label: "警戒範圍",
         data: [],
         fill: false,
         borderColor: "#ffb74d",
         borderDash: [6, 5],
       },
       {
-        label: "注意下限",
+        label: "警戒範圍",
         data: [],
         fill: false,
         borderColor: "#ffb74d",
@@ -169,7 +182,7 @@ const lineChartV = {
     labels: [],
     datasets: [
       {
-        label: "電壓",
+        label: "電壓（V）",
         data: [],
         borderColor: "#5d99c6",
       },
@@ -185,7 +198,7 @@ const lineChartC = {
     labels: [],
     datasets: [
       {
-        label: "電流",
+        label: "電流（A）",
         data: [],
         borderColor: "#9e9e9e",
         backgroundColor: "rgba(69, 152, 204, 0.48)",
@@ -195,14 +208,12 @@ const lineChartC = {
 };
 const lineChartP = {
   type: "line",
-  options: {
-    radius: 0,
-  },
+
   data: {
     labels: [],
     datasets: [
       {
-        label: "功耗",
+        label: "功耗（kW）",
         data: [],
         borderColor: "#9e9e9e",
         backgroundColor: "#5d99c6",
@@ -245,6 +256,21 @@ function updateChart() {
   lineChartV.data.labels = labels;
   lineChartC.data.labels = labels;
   lineChartP.data.labels = labels;
+
+  switch (tabOption.value) {
+    case "V":
+      lineChart.data.datasets[0].label = "電壓";
+      lineChart.options.scales.y.title.text = "電壓（V）";
+      break;
+    case "C":
+      lineChart.data.datasets[0].label = "電流";
+      lineChart.options.scales.y.title.text = "電流（A）";
+      break;
+    case "P":
+      lineChart.data.datasets[0].label = "功耗";
+      lineChart.options.scales.y.title.text = "功耗（kW）";
+      break;
+  }
 
   lineChartV.data.datasets[0].data = electronicDatas.map((data) => {
     return data["V"].value;
@@ -297,6 +323,9 @@ function updateLine() {
 }
 
 function updateInfo() {
+  date.value =
+    electronicDatas[electronicDatas.length - 1][tabOption.value].date;
+  console.log(electronicDatas[electronicDatas.length - 1]);
   if (tabOption.value === "V") {
     tab.value = "電壓";
   } else if (tabOption.value === "C") {
@@ -396,9 +425,10 @@ function getElec(probe) {
 
 .options {
   text-align: left;
+  margin: 16px auto 0 0;
 }
 .tabs {
-  margin: 28px 10px;
+  margin: 0 10px 0 0;
 }
 .probe {
   margin: 0px 10px;
@@ -429,12 +459,23 @@ function getElec(probe) {
   margin: 10px;
 }
 .line_chart {
-  margin: 10px;
-  padding: 16px;
+  margin-top: 10px;
 }
 
 .line_chart_per {
   padding: 8px;
   margin: 24px 8px;
+  &:first-child {
+    margin-left: 0;
+  }
+}
+.choose {
+  color: rgba(65, 65, 65, 0.87);
+  font-weight: bold;
+  margin: 0 2px 0 0px;
+  font-size: 16px;
+}
+:deep .el-input__inner {
+  width: 120px;
 }
 </style>
