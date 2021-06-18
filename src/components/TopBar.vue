@@ -1,18 +1,20 @@
 <template>
   <el-row>
-    <el-col :span="4" class="title">Dashboard</el-col>
-    <el-col :span="8"></el-col>
-    <el-col :span="8"></el-col>
-    <el-col class="btns" :span="4"
-      ><el-button @click="drawer()" class="mes-b" icon="el-icon-message" circle>
+    <el-col :span="6" class="title">Dashboard</el-col>
+    <el-col :span="6"></el-col>
+    <el-col :span="6"> </el-col>
+    <el-col class="btns" :span="6"
+      ><el-button @click="drawer()" class="mes-b" icon="el-icon-bell" circle>
       </el-button>
+        <span class="count-indicator">{{mesCount}}</span>
       <el-dropdown trigger="click">
+        Hi, Anila
         <el-button class="user-b" circle>
           <i class="el-icon-user"></i>
         </el-button>
         <template #dropdown>
           <el-dropdown-menu>
-            <el-dropdown-item>資訊</el-dropdown-item>
+            <!-- <el-dropdown-item>資訊</el-dropdown-item> -->
             <el-dropdown-item @click="logout()">登出</el-dropdown-item>
           </el-dropdown-menu>
         </template>
@@ -55,6 +57,7 @@ const tab = ref("");
 const state = ref("");
 const probeNo = ref("");
 const stateInfo = ref("");
+const mesCount = ref("")
 
 function logout() {
   store.commit("logout");
@@ -108,6 +111,7 @@ function updateData() {
   });
   list.push(...test);
 }
+mesCount.value = list.length
 
 // tab.value = store.getters.tabOption
 // stateNO.value = store.getters.stateNo(tabOption.value);
@@ -131,38 +135,42 @@ function generateAlarmText(stateNo) {
 
 <style lang="scss" scoped>
 .title {
-  font-size: 28px;
+  font-size: 32px;
   font-weight: bolder;
   color: rgba(0, 0, 0, 0.87);
   text-align: left;
 }
 .user-b {
-  background-color: rgba(68, 68, 68, 0.795);
-  margin: 0 0 0 8px;
+  background-color: #ffe4a5;
+  margin: 24px 20px 0 5px;
+  border: 0px;
 
   i {
-    color: #f6f8fb;
+    color: #797979;
+    font-size: 20px;
   }
 
   &:focus,
   &:hover {
     color: #f6f8fb;
-    border-color: rgb(165, 166, 168);
-    background-color: rgb(165, 166, 168);
+    border-color: #ffefc9;
+    background-color:#ffefc9 ;
   }
 }
 .mes-b {
-  background-color: #f35555da;
-
+  background-color: #FFF;
+  margin-right:10px;
+  border: 0px;
   :deep i {
-    color: #f6f8fb;
+    color: #838383;
+    font-size: 20px;
   }
 
   &:focus,
   &:hover {
     color: #f6f8fb;
-    border-color: #f78989;
-    background-color: #f78989;
+    border-color: #ffedebcf;
+    background-color: #ffedebcf;
   }
 }
 .btns {
@@ -199,5 +207,25 @@ function generateAlarmText(stateNo) {
   line-height: normal;
   margin: 0;
   font-size: 24px;
+}
+.count-indicator{
+    display: block;
+    position: absolute;
+    top: 24px;
+    right: 138px;
+    padding: 0 4px;
+    min-width: 20px;
+    text-align: center;
+    border: 1px solid #e7e7e9;
+    background: #f9aca5;
+    -webkit-box-shadow: 0px 2px 6px rgb(0 0 0 / 3%);
+    box-shadow: 0px 2px 6px rgb(0 0 0 / 3%);
+    border-radius: 50%;
+    z-index: 1;
+    font-size: 11px;
+    line-height: 18px;
+    color: #ffffff;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
 }
 </style>

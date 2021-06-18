@@ -25,11 +25,13 @@ const chartOption = ref("電力");
   background-color: rgba(68, 68, 68, 0.858) !important;
   border-color: rgba(122, 124, 128, 0.858) !important;
   box-shadow: -1px 0 0 0 rgba(96, 100, 107, 0.858) !important;
+
 }
-.chart_option{
+.chart_option {
   :deep .el-radio-button__inner {
     padding: 12px 16px;
+    margin-bottom: 12px;
+    border-radius: 20px 20px 20px 20px;
   }
 }
-
 </style>

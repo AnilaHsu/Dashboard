@@ -103,6 +103,7 @@ function resetForm() {
   justify-content: center;
   align-items: center;
   height: 100vh;
+  background-color: #fff;
 }
 
 .box-card {
@@ -138,8 +139,8 @@ h1 {
   &:focus,
   &:hover {
     color: rgb(111, 111, 111);
-    background-color: #f6f8fb;
-    border-color: rgb(191, 191, 191);
+    background-color: #ffefc9;
+    border-color: #f8dfa6;
   }
 }
 </style>

@@ -1,14 +1,7 @@
 <template>
   <el-row>
-    <el-col :span="20">
-      <div class="chart_option">
-        <el-radio-group v-model="chartOption">
-          <el-radio-button label="電力"></el-radio-button>
-          <el-radio-button label="溫濕度"></el-radio-button>
-        </el-radio-group>
-      </div>
-    </el-col>
-    <el-col :span="4">
+
+    <el-col>
       <div class="download-btn">
         <el-button class="download-pdf">pdf</el-button>
         <el-button class="download-csv">csv</el-button>
@@ -29,16 +22,19 @@ const chartOption = ref("電力");
   background-color: rgba(68, 68, 68, 0.858) !important;
   border-color: rgba(122, 124, 128, 0.858) !important;
   box-shadow: -1px 0 0 0 rgba(96, 100, 107, 0.858) !important;
+  
+
+  
 }
 .chart_option {
-  .el-radio-button__inner {
+  :deep .el-radio-button__inner {
     padding: 12px 16px;
+    border-radius: 20px 20px 20px 20px;
   }
 }
 
 .download-btn {
   display: inline-block;
-  float: right;
   margin: 0 10px;
 }
 

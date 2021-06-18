@@ -3,7 +3,6 @@
     <div class="options">
       <span class="choose"> probe</span>
       <el-select
-        class="probe"
         v-model="value"
         clearable
         placeholder="請選擇 probe"
@@ -88,7 +87,7 @@ import zoomPlugin from "chartjs-plugin-zoom";
 import { useStore } from "vuex";
 import axios from "../utils/api";
 import { baseURL } from "../utils/constants";
-import DateCard from "./DateCard.vue"
+import DateCard from "./DateCard.vue";
 
 Vue3ChartJs.registerGlobalPlugins([zoomPlugin]);
 
@@ -177,6 +176,22 @@ const lineChartV = {
   type: "line",
   options: {
     radius: 0,
+    // scales: {
+    //   x: {
+    //     display: true,
+    //     title: {
+    //       display: true,
+    //       text: "時間",
+    //     },
+    //   },
+    //   y: {
+    //     display: true,
+    //     title: {
+    //       display: true,
+    //       text: "電壓值 (V)",
+    //     },
+    //   },
+    // },
   },
   data: {
     labels: [],
@@ -193,6 +208,22 @@ const lineChartC = {
   type: "line",
   options: {
     radius: 0,
+    // scales: {
+    //   x: {
+    //     display: true,
+    //     title: {
+    //       display: true,
+    //       text: "時間",
+    //     },
+    //   },
+    //   y: {
+    //     display: true,
+    //     title: {
+    //       display: true,
+    //       text: "電流值 (C)",
+    //     },
+    //   },
+    // },
   },
   data: {
     labels: [],
@@ -200,14 +231,32 @@ const lineChartC = {
       {
         label: "電流（A）",
         data: [],
-        borderColor: "#9e9e9e",
-        backgroundColor: "rgba(69, 152, 204, 0.48)",
+        borderColor: "#3a5373",
       },
     ],
   },
 };
 const lineChartP = {
   type: "line",
+  options: {
+    radius: 0,
+    // scales: {
+    //   x: {
+    //     display: true,
+    //     title: {
+    //       display: true,
+    //       text: "時間",
+    //     },
+    //   },
+    //   y: {
+    //     display: true,
+    //     title: {
+    //       display: true,
+    //       text: "功耗值 (kW)",
+    //     },
+    //   },
+    // },
+  },
 
   data: {
     labels: [],
@@ -215,8 +264,7 @@ const lineChartP = {
       {
         label: "功耗（kW）",
         data: [],
-        borderColor: "#9e9e9e",
-        backgroundColor: "#5d99c6",
+        borderColor: "#61573c",
       },
     ],
   },
@@ -414,6 +462,7 @@ function getElec(probe) {
   :deep .el-radio-button__inner {
     padding: 10px 20px;
     color: rgb(120, 120, 120);
+    border-radius: 20px 20px 20px 20px;
   }
   :deep .el-radio-button__orig-radio:checked + .el-radio-button__inner {
     background-color: rgba(68, 68, 68, 0.858) !important;
@@ -424,11 +473,12 @@ function getElec(probe) {
 }
 
 .options {
-  text-align: left;
+  text-align: center;
+  
   margin: 16px auto 0 0;
 }
 .tabs {
-  margin: 0 10px 0 0;
+  margin: 0 10px 5px 10px;
 }
 .probe {
   margin: 0px 10px;
@@ -441,14 +491,14 @@ function getElec(probe) {
   .content-label {
     font-size: 14px;
     font-style: normal;
-    margin: 0 0 4px 0;
+    margin: 0 0 2px 0;
     color: rgba(0, 0, 0, 0.35);
   }
   .content-info {
     font-size: 22px;
     font-style: bold;
     color: black;
-    margin: 0 0 12px 0;
+    margin: 0 0 20px 0;
   }
   .content-info:last-child {
     margin: 0;
@@ -464,7 +514,7 @@ function getElec(probe) {
 
 .line_chart_per {
   padding: 8px;
-  margin: 24px 8px;
+  margin: 16px 8px;
   &:first-child {
     margin-left: 0;
   }
@@ -472,7 +522,7 @@ function getElec(probe) {
 .choose {
   color: rgba(65, 65, 65, 0.87);
   font-weight: bold;
-  margin: 0 2px 0 0px;
+  margin: 0 8px 0 0px;
   font-size: 16px;
 }
 :deep .el-input__inner {

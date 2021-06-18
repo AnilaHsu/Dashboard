@@ -100,6 +100,7 @@ const lineChartRef = ref(null);
 const lineChart = {
   type: "line",
   options: {
+    radius: 0,
     scales: {
       x: {
         display: true,
@@ -112,7 +113,7 @@ const lineChart = {
         display: true,
         title: {
           display: true,
-          text: "",
+          text: "溫度（C）",
         },
       },
     },
@@ -357,7 +358,7 @@ function getTempHum(sensor) {
   text-align: left;
   color: rgba(68, 68, 68, 0.858);
   font-size: 16px;
-  padding: 8px;
+  padding: 6px;
   .content-label {
     font-size: 14px;
     font-style: normal;
@@ -368,7 +369,7 @@ function getTempHum(sensor) {
     font-size: 24px;
     font-style: bold;
     color: black;
-    margin: 0 0 12px 0;
+    margin: 0 0 16px 0;
   }
   .content-info:last-child {
     margin: 0;

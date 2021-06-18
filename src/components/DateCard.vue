@@ -42,4 +42,9 @@ const props = defineProps({
     }
   }
 }
+.icon-data{
+    margin-right: 10px;
+    margin-top: 16px;
+    font-size: 24px;
+    }
 </style>

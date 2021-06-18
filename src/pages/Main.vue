@@ -1,7 +1,7 @@
 <template>
   <div class="common-layout">
     <el-container>
-      <el-aside width="200px">
+      <el-aside width="80px">
         <SideBar />
       </el-aside>
       <el-container>
@@ -28,11 +28,14 @@ import TopBar from "../components/TopBar.vue";
   text-align: center;
   line-height: 70px;
   height: 70px !important;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, .1);
   z-index: 10;
-  padding: 0 30px 16px 20px;
+  padding: 0 40px !important;
+ 
 }
 
+.el-row {
+  margin: 0;
+}
 .el-aside {
   background-color: #d3dce6;
   color: #333;
@@ -43,8 +46,12 @@ import TopBar from "../components/TopBar.vue";
 
 .main {
   min-height: 100vh;
+  background-color: #ffffff;
 }
 .el-card {
   border-radius: 8px !important;
+}
+.el-main {
+  padding: 20px 55px !important;
 }
 </style>
