@@ -6,7 +6,7 @@
     <el-col class="btns" :span="6"
       ><el-button @click="drawer()" class="mes-b" icon="el-icon-bell" circle>
       </el-button>
-        <span class="count-indicator">{{mesCount}}</span>
+      <span class="count-indicator">{{ mesCount }}</span>
       <el-dropdown trigger="click">
         Hi, Anila
         <el-button class="user-b" circle>
@@ -49,6 +49,7 @@
 </template>
 
 <script setup>
+import { Title } from "chart.js";
 import { onUpdated, reactive, ref } from "vue";
 import { useStore } from "vuex";
 const store = useStore();
@@ -57,7 +58,7 @@ const tab = ref("");
 const state = ref("");
 const probeNo = ref("");
 const stateInfo = ref("");
-const mesCount = ref("")
+const mesCount = ref("");
 
 function logout() {
   store.commit("logout");
@@ -80,38 +81,55 @@ function test(type) {
 const list = reactive([]);
 
 function updateData() {
-  const electAlarms = store.getters.electronicDatas.filter((electAlarm) => {
-    return (
-      electAlarm.V.alarm_level !== 0 ||
-      electAlarm.C.alarm_level !== 0 ||
-      electAlarm.P.alarm_level !== 0
-    );
-  });
-  const test = electAlarms.flatMap((electAlarm, index) => {
-    return [
-      {
-        type: electAlarm.V.alarm_level,
-        title: generateAlarmText(electAlarm.V.alarm_level),
-        content: store.getters.stateDescription("V", electAlarm),
-        probeNo: `probe${electAlarm.V.probe}`,
-      },
-      {
-        type: electAlarm.C.alarm_level,
-        title: generateAlarmText(electAlarm.C.alarm_level),
-        content: store.getters.stateDescription("C", electAlarm),
-        probeNo: `probe${electAlarm.C.probe}`,
-      },
-      {
-        type: electAlarm.P.alarm_level,
-        title: generateAlarmText(electAlarm.P.alarm_level),
-        content: store.getters.stateDescription("P", electAlarm),
-        probeNo: `probe${electAlarm.P.probe}`,
-      },
-    ];
-  });
-  list.push(...test);
+  const test = store.getters.electronicDatas.filter((data) => {
+    return data.C.alarm_level === 1 && data.C.value < data.C.ai_power_upperbound1
+  })
+  console.log(test)
+  list.splice(0, list.length);
+  const elect = store.getters.electronicDatas
+    .map((data) => {
+      const dataC = data.C;
+      dataC["Type"] = "C";
+      const dataV = data.V;
+      dataV["Type"] = "V";
+      const dataP = data.P;
+      dataP["Type"] = "P";
+      return [data.V, data.C, data.P];
+    })
+    .flat()
+    .filter((data) => {
+      return data.alarm_level !== 0;
+    })
+    .map((data) => {
+      if (data.Type == "C") {
+        return {
+          type: data.alarm_level,
+          title: generateAlarmText(data.alarm_level),
+          content: store.getters.stateDescription("C", data),
+          alarm_level: data.alarm_level,
+          probeNo: data.probe,
+        };
+      } else if (data.Type == "V") {
+        return {
+          type: data.alarm_level,
+          title: generateAlarmText(data.alarm_level),
+          content: store.getters.stateDescription("V", data),
+          probeNo: data.probe,
+        };
+      } else if (data.Type == "P") {
+        return {
+          type: data.alarm_level,
+          title: generateAlarmText(data.alarm_level),
+          content: store.getters.stateDescription("P", data),
+          probeNo: data.probe,
+        };
+      }
+    });
+  list.push(...elect);
+  console.log(list)
 }
-mesCount.value = list.length
+
+mesCount.value = list.length;
 
 // tab.value = store.getters.tabOption
 // stateNO.value = store.getters.stateNo(tabOption.value);
@@ -154,12 +172,12 @@ function generateAlarmText(stateNo) {
   &:hover {
     color: #f6f8fb;
     border-color: #ffefc9;
-    background-color:#ffefc9 ;
+    background-color: #ffefc9;
   }
 }
 .mes-b {
-  background-color: #FFF;
-  margin-right:10px;
+  background-color: #fff;
+  margin-right: 10px;
   border: 0px;
   :deep i {
     color: #838383;
@@ -208,24 +226,24 @@ function generateAlarmText(stateNo) {
   margin: 0;
   font-size: 24px;
 }
-.count-indicator{
-    display: block;
-    position: absolute;
-    top: 24px;
-    right: 138px;
-    padding: 0 4px;
-    min-width: 20px;
-    text-align: center;
-    border: 1px solid #e7e7e9;
-    background: #f9aca5;
-    -webkit-box-shadow: 0px 2px 6px rgb(0 0 0 / 3%);
-    box-shadow: 0px 2px 6px rgb(0 0 0 / 3%);
-    border-radius: 50%;
-    z-index: 1;
-    font-size: 11px;
-    line-height: 18px;
-    color: #ffffff;
-    -webkit-box-sizing: border-box;
-    box-sizing: border-box;
+.count-indicator {
+  display: block;
+  position: absolute;
+  top: 24px;
+  right: 138px;
+  padding: 0 4px;
+  min-width: 20px;
+  text-align: center;
+  border: 1px solid #e7e7e9;
+  background: #f9aca5;
+  -webkit-box-shadow: 0px 2px 6px rgb(0 0 0 / 3%);
+  box-shadow: 0px 2px 6px rgb(0 0 0 / 3%);
+  border-radius: 50%;
+  z-index: 1;
+  font-size: 11px;
+  line-height: 18px;
+  color: #ffffff;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
 }
 </style>

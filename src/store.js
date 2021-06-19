@@ -25,11 +25,11 @@ export const store = createStore({
       return electronicDatas
     },
     stateDescription: (state) => (tabOption, elect) => {
-      const now = elect[tabOption].value
-      const upper2 = elect[tabOption].ai_power_upperbound2
-      const lower2 = elect[tabOption].ai_power_lowerbound2
-      const upper1 = elect[tabOption].ai_power_upperbound1
-      const lower1 = elect[tabOption].ai_power_lowerbound1
+      const now = elect.value
+      const upper2 = elect.ai_power_upperbound2
+      const lower2 = elect.ai_power_lowerbound2
+      const upper1 = elect.ai_power_upperbound1
+      const lower1 = elect.ai_power_lowerbound1
       if (tabOption === "V") {
         if (now > upper2) {
           return "電壓狀態嚴重高於限制，可能造成設備損壞";
@@ -48,7 +48,7 @@ export const store = createStore({
         } else if (now > upper1) {
           return "電流在未來30分鐘將有高機率超出範圍!";
         } else {
-          return "電流在在正常範圍";
+          return "電流在正常範圍";
         }
       } else if (tabOption === "P") {
         if (now > upper2) {
