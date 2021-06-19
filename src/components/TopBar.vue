@@ -6,7 +6,7 @@
     <el-col class="btns" :span="6"
       ><el-button @click="drawer()" class="mes-b" icon="el-icon-bell" circle>
       </el-button>
-      <span class="count-indicator">{{ mesCount }}</span>
+      <span class="count-indicator">{{ alarmList.length }}</span>
       <el-dropdown trigger="click">
         Hi, Anila
         <el-button class="user-b" circle>
@@ -24,11 +24,11 @@
 
   <div>
     <el-drawer v-model="isDrawerOpen" :with-header="false" @open="updateData">
-      <div v-if="list.length > 0">
+      <div v-if="alarmList.length > 0">
         <el-card
           class="notice-card"
           shadow="hover"
-          v-for="(item, i) in list"
+          v-for="(item, i) in alarmList"
           :key="i"
         >
           <div class="notice-title">
@@ -36,7 +36,7 @@
             {{ item.title }}
           </div>
           <div class="notice-content">
-            {{ item.probeNo }} : {{ item.content }}
+            probe {{ item.probeNo }} : {{ item.content }}
           </div>
         </el-card>
       </div>
@@ -49,8 +49,7 @@
 </template>
 
 <script setup>
-import { Title } from "chart.js";
-import { onUpdated, reactive, ref } from "vue";
+import { onUpdated, reactive, ref, computed } from "vue";
 import { useStore } from "vuex";
 const store = useStore();
 const isDrawerOpen = ref(false);
@@ -59,34 +58,8 @@ const state = ref("");
 const probeNo = ref("");
 const stateInfo = ref("");
 const mesCount = ref("");
-
-function logout() {
-  store.commit("logout");
-}
-
-function drawer() {
-  isDrawerOpen.value = true;
-}
-
-function test(type) {
-  if (type == 1) {
-    return "el-icon-question";
-  } else if (type == 2) {
-    return "el-icon-info";
-  } else if (type == 3) {
-    return "el-icon-warning";
-  }
-}
-
-const list = reactive([]);
-
-function updateData() {
-  const test = store.getters.electronicDatas.filter((data) => {
-    return data.C.alarm_level === 1 && data.C.value < data.C.ai_power_upperbound1
-  })
-  console.log(test)
-  list.splice(0, list.length);
-  const elect = store.getters.electronicDatas
+const alarmList = computed(() => {
+  return store.getters.electronicDatas
     .map((data) => {
       const dataC = data.C;
       dataC["Type"] = "C";
@@ -125,11 +98,26 @@ function updateData() {
         };
       }
     });
-  list.push(...elect);
-  console.log(list)
+});
+
+
+function logout() {
+  store.commit("logout");
 }
 
-mesCount.value = list.length;
+function drawer() {
+  isDrawerOpen.value = true;
+}
+
+function test(type) {
+  if (type == 1) {
+    return "el-icon-question";
+  } else if (type == 2) {
+    return "el-icon-info";
+  } else if (type == 3) {
+    return "el-icon-warning";
+  }
+}
 
 // tab.value = store.getters.tabOption
 // stateNO.value = store.getters.stateNo(tabOption.value);
@@ -152,6 +140,7 @@ function generateAlarmText(stateNo) {
 </script>
 
 <style lang="scss" scoped>
+
 .title {
   font-size: 32px;
   font-weight: bolder;
@@ -245,5 +234,8 @@ function generateAlarmText(stateNo) {
   color: #ffffff;
   -webkit-box-sizing: border-box;
   box-sizing: border-box;
+}
+:deep .el-drawer{
+  overflow: scroll;
 }
 </style>
