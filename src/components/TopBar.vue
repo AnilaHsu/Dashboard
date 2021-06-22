@@ -100,7 +100,6 @@ const alarmList = computed(() => {
     });
 });
 
-
 function logout() {
   store.commit("logout");
 }
@@ -140,7 +139,6 @@ function generateAlarmText(stateNo) {
 </script>
 
 <style lang="scss" scoped>
-
 .title {
   font-size: 32px;
   font-weight: bolder;
@@ -235,7 +233,7 @@ function generateAlarmText(stateNo) {
   -webkit-box-sizing: border-box;
   box-sizing: border-box;
 }
-:deep .el-drawer{
+:deep .el-drawer {
   overflow: scroll;
 }
 </style>

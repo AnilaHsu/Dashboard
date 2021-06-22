@@ -37,7 +37,7 @@
         </el-select>
       </div>
     </div>
-    <date-card :date="date" class="date-card"/>
+    <date-card :date="date" class="date-card" />
   </el-row>
 
   <el-row>
@@ -95,11 +95,16 @@ const upper1 = ref("");
 const lower1 = ref("");
 const upper2 = ref("");
 const lower2 = ref("");
-const date = ref("")
+const date = ref("");
 const lineChartRef = ref(null);
 const lineChart = {
   type: "line",
   options: {
+    interaction: {
+      mode: "index",
+      intersect: false,
+      axis: "x",
+    },
     radius: 0,
     scales: {
       x: {
@@ -126,6 +131,7 @@ const lineChart = {
         data: [],
         fill: false,
         borderColor: "#707070",
+        tension: 0.4,
       },
       {
         label: "安全範圍",
@@ -187,6 +193,11 @@ function updateData() {
 }
 
 function updateChart() {
+  lineChart.data.datasets[0].data = []
+  lineChart.data.datasets[1].data = []
+  lineChart.data.datasets[2].data = []
+  lineChart.data.datasets[3].data = []
+  lineChart.data.datasets[4].data = []
   lineChart.data.labels = tempHumDatas.map((data) => {
     return data.index_date;
   });
@@ -228,7 +239,7 @@ function updateChart() {
 }
 
 function updateInfo() {
-  date.value = tempHumDatas[tempHumDatas.length - 1].date
+  date.value = tempHumDatas[tempHumDatas.length - 1].date;
   const type = tempHumDatas.map((data) => {
     return data.type;
   });
@@ -305,6 +316,8 @@ function getGateways() {
 }
 
 function getSensors(gateway) {
+  console.log("AAA")
+  options1.value = options1.splice(0,options1.length)
   return axios
     .get(`/getSensors?gateway_no=${gateway}`)
     .then((sensors) => {

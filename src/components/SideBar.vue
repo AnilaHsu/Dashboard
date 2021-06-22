@@ -25,9 +25,9 @@
         <template #title>報表</template>
       </el-menu-item>
 
-      <el-menu-item index="3">
+      <el-menu-item index="3" route="/contribution">
         <i class="el-icon-setting"></i>
-        <template #title>設定</template>
+        <template #title>貢獻</template>
       </el-menu-item>
     </el-menu>
   </div>

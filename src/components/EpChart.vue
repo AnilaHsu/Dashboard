@@ -112,6 +112,11 @@ const lineChartRefP = ref(null);
 const lineChart = {
   type: "line",
   options: {
+    interaction: {
+      mode: "index",
+      intersect: false,
+      axis: "x",
+    },
     radius: 0,
     scales: {
       x: {
@@ -138,6 +143,7 @@ const lineChart = {
         data: [],
         fill: false,
         borderColor: "#707070",
+        tension: 0.4,
       },
       {
         label: "安全範圍",
@@ -474,7 +480,7 @@ function getElec(probe) {
 
 .options {
   text-align: center;
-  
+
   margin: 16px auto 0 0;
 }
 .tabs {
