@@ -1,4 +1,3 @@
-![UI For Dashboard ](https://user-images.githubusercontent.com/50144690/123568917-edb6b480-d7f7-11eb-955e-5671c864470c.png)
 # Dashboard
 Electricity and temperature dashboard for AI prediction.
 
