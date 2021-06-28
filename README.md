@@ -1,3 +1,4 @@
+![UI For Dashboard ](https://user-images.githubusercontent.com/50144690/123568917-edb6b480-d7f7-11eb-955e-5671c864470c.png)
 # Dashboard
 Electricity and temperature dashboard for AI prediction.
 
@@ -12,5 +13,6 @@ The information on the dashboard comes from the electricity and temperature and 
 - vue-router
 - chart.js
 - element-plus
-![UI for Dashboard](https://user-images.githubusercontent.com/50144690/123568616-49347280-d7f7-11eb-9318-5530cb635cae.png "UI for Dashboard")
+![UI For Dashboard ](https://user-images.githubusercontent.com/50144690/123568937-fc04d080-d7f7-11eb-95df-ce859d0cb4e7.png"UI For Dashboard")
+
 
