@@ -12,3 +12,7 @@ The information on the dashboard comes from the electricity and temperature and 
 - vue-router
 - chart.js
 - element-plus
+
+![UI for Dashboard](https://user-images.githubusercontent.com/50144690/123568616-49347280-d7f7-11eb-9318-5530cb635cae.png "UI for Dashboard")
+![UI for Dashboard]:https://user-images.githubusercontent.com/50144690/123568666-6406e700-d7f7-11eb-9e15-fd04c3971484.png  "UI for Dashboard"
+
